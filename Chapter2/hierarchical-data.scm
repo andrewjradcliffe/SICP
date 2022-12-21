@@ -99,23 +99,37 @@
 (define (deep-reverse items)
   (deep-reverse-impl items '()))
 
-(define (deep-reverse-impl list1 list2)
-  (cond ((null? list1) list2)
-        ;; ((pair? list1)
-        ;;  (cons (deep-reverse (cdr list1)) (cons (deep-reverse (car list1)) list2)))
-        ;; (else (deep-reverse-impl (cdr list1) (cons (car list1) list2)))
-        ((not (pair? list1))
-         (cons list1 list2))
-        ;; (else (deep-reverse-impl (cdr list1) (deep-reverse-impl (car list1) list2)))
-        ;; (else (deep-reverse-impl (cdr list1) (cons (deep-reverse (car list1)) list2)))
-        ;; (else (cons (deep-reverse-impl (cdr list1) (deep-reverse (car list1))) list2))
-        (else (deep-reverse-impl (cdr list1) (cons (deep-reverse (car list1)) list2)))
+;; (define (deep-reverse-impl list1 list2)
+;;   (cond ((null? list1) list2)
+;;         ;; ((pair? list1)
+;;         ;;  (cons (deep-reverse (cdr list1)) (cons (deep-reverse (car list1)) list2)))
+;;         ;; (else (deep-reverse-impl (cdr list1) (cons (car list1) list2)))
+;;         ((not (pair? list1))
+;;          (cons list1 list2))
+;;         ;; (else (deep-reverse-impl (cdr list1) (deep-reverse-impl (car list1) list2)))
+;;         ;; (else (deep-reverse-impl (cdr list1) (cons (deep-reverse (car list1)) list2)))
+;;         ;; (else (cons (deep-reverse-impl (cdr list1) (deep-reverse (car list1))) list2))
+;;         (else (deep-reverse-impl (cdr list1) (cons (deep-reverse (car list1)) list2)))
 
-        ))
+;;         ))
 
 (deep-reverse (list 1 2 3))
 
 
+(define (deep-reverse-impl x y)
+  (cond ((null? x) y)
+        ((not (pair? x)) (cons x y))
+        ((pair? (car x))
+         (deep-reverse-impl (cdr x) (cons (deep-reverse (car x)) y)))
+        (else (deep-reverse-impl (cdr x) (deep-reverse-impl (car x) y)))))
+
+(define l227_1 (list (list 1 2) (list 3 4)))
+(define l227_2 (list (list 4 3) (list 2 1)))
+
+(deep-reverse l227_1)
+(deep-reverse l227_2)
+(deep-reverse (list l227_1 l227_2))
+(deep-reverse (list l227_1 (list l227_2 5)))
 
 
 ;; Ex. 2.28
