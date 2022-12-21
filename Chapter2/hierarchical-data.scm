@@ -1,5 +1,15 @@
 ;; 2.2.1 Representing Sequences
 
+(define (my-append list1 list2)
+  (if (null? list1)
+      list2
+      (cons (car list1) (append (cdr list1) list2))))
+
+(define (copy x)
+  (if (null? x)
+      '()
+      (cons (car x) (copy (cdr x)))))
+
 ;; Ex. 2.17
 (define (last-pair items)
   (if (null? (cdr items))
