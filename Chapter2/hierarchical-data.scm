@@ -22,7 +22,7 @@
 (define (same-parity x . y)
   (let ((p? (if (even? x) even? odd?))
         (z (list x)))
-    (same-parity-rec p? y z)))
+    (reverse (same-parity-rec p? y z))))
 
 (define (same-parity-iter p? y z)
   (if (null? y)
@@ -44,6 +44,18 @@
 
 (same-parity 1 2 3 4 5 6 7)
 (same-parity 2 3 4 5 6 7)
+
+;; Revised!
+(define (same-parity-2 x . y)
+  (let ((p? (if (even? x) even? odd?)))
+    (cons x (same-parity-impl-2 p? y))))
+
+(define (same-parity-impl-2 p? y)
+  (if (null? y)
+      '()
+      (if (p? (car y))
+          (cons (car y) (same-parity-impl-2 p? (cdr y)))
+          (same-parity-impl-2 p? (cdr y)))))
 
 ;; 2.2.2. Hierarchical Data
 
