@@ -86,7 +86,7 @@
 (define l225_3 (list 1 (list 2 (list 3 (list 4 (list 5 (list 6 7)))))))
 (= (cadr (cadr (cadr (cadr (cadr (cadr l225_3)))))) 7)
 
-;; Ex 2.26
+;; Ex. 2.26
 (define x (list 1 2 3))
 (define y (list 4 5 6))
 
@@ -94,7 +94,31 @@
 (cons x y)   ; ((1 2 3) 4 5 6)
 (list x y)   ; ((1 2 3) (4 5 6))
 
-;; Ex 2.28
+;; Ex. 2.27
+
+(define (deep-reverse items)
+  (deep-reverse-impl items '()))
+
+(define (deep-reverse-impl list1 list2)
+  (cond ((null? list1) list2)
+        ;; ((pair? list1)
+        ;;  (cons (deep-reverse (cdr list1)) (cons (deep-reverse (car list1)) list2)))
+        ;; (else (deep-reverse-impl (cdr list1) (cons (car list1) list2)))
+        ((not (pair? list1))
+         (cons list1 list2))
+        ;; (else (deep-reverse-impl (cdr list1) (deep-reverse-impl (car list1) list2)))
+        ;; (else (deep-reverse-impl (cdr list1) (cons (deep-reverse (car list1)) list2)))
+        ;; (else (cons (deep-reverse-impl (cdr list1) (deep-reverse (car list1))) list2))
+        (else (deep-reverse-impl (cdr list1) (cons (deep-reverse (car list1)) list2)))
+
+        ))
+
+(deep-reverse (list 1 2 3))
+
+
+
+
+;; Ex. 2.28
 (define l228 (list (list 1 2) (list 3 4)))
 
 (define (fringe x)
