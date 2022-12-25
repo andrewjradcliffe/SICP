@@ -110,7 +110,7 @@
 (define (list-ref n items)
   (if (= n 0)
       (car items)
-      (list-ref (- n 1) items)))
+      (list-ref (- n 1) (cdr items))))
 
 (define (enumerate-interval low hi)
   (if (> low hi)
