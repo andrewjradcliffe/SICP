@@ -99,9 +99,13 @@
   (bad-queen-cols board-size))
 
 ;; 6 does happen to finish, as does 7; 8 likely may finish, albeit, after a fair amount of time.
-
+;; In fact, the estimate of order n^n is quite accurate.
+;; Measurement of (bad-queens 7) is approximately 15 seconds
+;; Measurement of (bad-queens 8) is approximately 300 seconds
+;; The 300 / 15 = 20 is almost exactly the ratio of times one would estimate from 8^8 / 7^7
 (bad-queens 7)
 (expt 6 6)
-(expt 7 6)
+(expt 7 7)
+(expt 8 8)
 (* 1.0 (/ (expt 8 7) (expt 7 6)))
 (* 1.0 (/ (expt 8 8) (expt 7 7)))
