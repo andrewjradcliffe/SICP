@@ -51,3 +51,34 @@
                  (enumerate-interval 1 board-size)))
           (queen-cols (- k 1))))))
   (queen-cols board-size))
+
+(define (display-queen-row k row)
+  (for-each (lambda (x) (display (if (= x k) "■\t" "⋅\t"))) row)
+  (newline))
+
+(define (display-queens positions)
+  (newline)
+  (display positions)
+  (newline)
+  (newline)
+  (let ((row (car (transpose positions))))
+    ;; ((row (fold-right (lambda (x y) (cons (car x) y)) () positions))) ;; Another way
+    (for-each (lambda (k) (display-queen-row k row)) (enumerate-interval 1 (length row)))))
+
+(define ans (queens 4))
+
+(safe? 1 (car ans))
+(safe? 2 (car ans))
+(safe? 3 (car ans))
+
+(same-diagonal? '(3 2) '(2 3))
+(safe-or-identical? '(3 2) '(2 3))
+(safe-or-identical? '(2 3) '(3 2))
+
+(filter (lambda (p) (safe? 3 p)) ans)
+
+(safe? 4 (car ans))
+
+
+(define ans (queens 6))
+(for-each display-queens ans)
