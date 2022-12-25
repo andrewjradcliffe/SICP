@@ -1,4 +1,4 @@
-;; Ex. 2.42; Ex. 2.43
+;; Ex. 2.42
 
 (define empty-board ())
 
@@ -82,3 +82,26 @@
 
 (define ans (queens 6))
 (for-each display-queens ans)
+
+;; Ex 2.43
+(define (bad-queens board-size)
+  (define (bad-queen-cols k)
+    (if (= k 0)
+        (list empty-board)
+        (filter
+         (lambda (positions) (safe? k positions))
+         (flatmap
+          (lambda (new-row)
+            (map (lambda (rest-of-queens)
+                   (adjoin-position new-row k rest-of-queens))
+                 (bad-queen-cols (- k 1))))
+          (enumerate-interval 1 board-size)))))
+  (bad-queen-cols board-size))
+
+;; 6 does happen to finish, as does 7; 8 likely may finish, albeit, after a fair amount of time.
+
+(bad-queens 7)
+(expt 6 6)
+(expt 7 6)
+(* 1.0 (/ (expt 8 7) (expt 7 6)))
+(* 1.0 (/ (expt 8 8) (expt 7 7)))
