@@ -52,6 +52,19 @@
 (equal? (accumulate-n + 0 s) (list 22 26 30))
 
 ;; Ex. 2.37
+(define (dot-product v w)
+  (accumulate + 0 (map * v w)))
+
+(define (matrix-*-vector m v)
+  (map (lambda (r) (dot-product r v)) m))
+
+(define (transpose m)
+  (accumulate-n cons () m))
+
+(define (matrix-*-matrix m n)
+  (let ((cols (transpose n)))
+    (map (lambda (r) (matrix-*-vector cols r)) m)))
+
 
 ;; Ex. 2.38
 (= (fold-right / 1 (list 1 2 3)) (/ 3 2))
