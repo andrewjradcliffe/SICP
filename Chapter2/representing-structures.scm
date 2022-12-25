@@ -11,10 +11,10 @@
       (cons (car x) (copy (cdr x)))))
 
 ;; Ex. 2.17
-(define (last-pair items)
+(define (my-last-pair items)
   (if (null? (cdr items))
       (list (car items))
-      (last-pair (cdr items))))
+      (my-last-pair (cdr items))))
 
 ;; Ex. 2.18
 (define (my-reverse items)
