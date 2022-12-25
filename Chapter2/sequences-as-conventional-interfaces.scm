@@ -76,3 +76,43 @@
 (equal? (reverse-left (list 1 2 3)) (list 3 2 1))
 (equal? (copy-right (list 1 2 3)) (list 1 2 3))
 (equal? (copy-left (list 1 2 3)) (list 1 2 3))
+
+(define (deep-reverse-right sequence)
+  (fold-right (lambda (x y) (append y (if (pair? x)
+                                          (list (deep-reverse-right x))
+                                          (list x))))
+              ()
+              sequence))
+
+(define (deep-reverse-left sequence)
+  (fold-left (lambda (x y) (cons (if (pair? y) (deep-reverse-left y) y) x)) () sequence))
+
+(deep-reverse-right '(1 2 3 (1 2)))
+(deep-reverse-left '(1 2 3 (1 2)))
+
+(define (last-left sequence)
+  (fold-left (lambda (x y) y) () sequence))
+
+(define (last-right sequence) ;; contrived, and also fails on the empty list
+  (car (fold-right (lambda (x y) (if (null? y) (cons x y) y)) () sequence)))
+
+(define (last-pair-left sequence)
+  (cons (last-left sequence) ()))
+
+
+;;;; Nested Mappings
+
+(define (flatmap proc seq)
+  (accumulate append () (map proc seq)))
+
+
+;;;; Common utilities
+(define (list-ref n items)
+  (if (= n 0)
+      (car items)
+      (list-ref (- n 1) items)))
+
+(define (enumerate-interval low hi)
+  (if (> low hi)
+      ()
+      (cons low (enumerate-interval (+ low 1) hi))))
