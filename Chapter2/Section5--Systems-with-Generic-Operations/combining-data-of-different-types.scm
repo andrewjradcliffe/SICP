@@ -232,3 +232,86 @@
   (if (pair? x)
       (<: (type-tag x) 'complex)
       false))
+
+;; 2.85
+
+(define (project n) (apply-generic 'project n))
+
+;; within install-integer-package
+(define (project-integer x) (make-integer x))
+(put 'project '(integer) project-integer)
+
+;; within install-real-package
+(define (project-real x) (make-integer (round x)))
+(put 'project '(real) project-real)
+
+;; within install-rational-package
+(define (project-rational x) (project (raise-rational x)))
+(put 'project '(rational) project-rational)
+
+;; within install-complex-package
+(define (project-complex z) (make-real (real-part z)))
+(put 'project '(complex) project-complex)
+
+(define (drop x)
+  (let ((y (project x)))
+    (if (equal? x y)
+        x ;; i.e. we've hit the bottom
+        (if (equ? x (raise y))
+            (drop y)  ;; i.e. lossless projection, so we attempt another projection
+            x ;; lossy projection, cannot continue
+            ))))
+
+;; modification to apply-generic -- necessitates a different apply-generic
+;; for numeric types:
+;; (drop (apply proc (map contents args)))
+
+;; slightly more normal:
+;; (let ((result (apply proc (map contents args))))
+;;   (if (number-type? result)
+;;       (drop result)
+;;       result))
+
+;; Note on general use of apply-generic for raise, project, equ?, etc.:
+;; one can either use specific calls, or defer to apply-generic.
+;; If one defers to apply-generic, then one need to take care that operations
+;; such as raise, drop, promote, etc. have generic support.
+
+;; Ex. 2.86
+
+;; This boils down to making the rectangular and polar packages work with arbitrary types,
+;; which requires generic math primitives. This means that one needs to define generics for
+;; functions such as cos, sin, square, sqrt, etc.
+;; This enables real-part, imag-part, angle,  magnitude in the complex package to work
+;; on arbitrary types.
+;; The last change is to use add, sub, mul, div in place of +, -, *, / in the complex package.
+
+(define (cosine x) (apply-generic 'cosine x))
+(define (sine x) (apply-generic 'sine x))
+(define (arctan x) (apply-generic 'arctan x))
+(define (square x) (mul x x))
+(define (square-root x) (apply-generic 'square-root x))
+
+;; within install-scheme-number-package
+(define (cosine-scheme-number x) (cos x))
+(put 'cosine '(scheme-number) (lambda (x) (tag (cosine-scheme-number x))))
+(define (sine-scheme-number x) (sin x))
+(put 'sine '(scheme-number) (lambda (x) (tag (sine-scheme-number x))))
+(put 'arctan '(scheme-number scheme-number) (lambda (x y) (tag (atan x y))))
+
+(put 'square-root '(scheme-number) (lambda (x) (tag (sqrt x))))
+
+
+;; within install-rational-package
+(define (rationalize x)) ;; some implementation
+(define (cosine-rational x) (rationalize (cos (rational->real x))))
+(put 'cosine '(rational) (lambda (x) (tag (cosine-rational x))))
+
+(define (sine-rational x) (rationalize (sin (rational->real x))))
+(put 'sine '(rational) (lambda (x) (tag (sine-rational x))))
+
+(define (arctan-rational x y) (rationalize (atan (rational->real x) (rational->real y))))
+(put 'arctan '(rational rational) (lambda (x y) (tag (arctan-rational x y))))
+
+(define (square-root-rational x) (rationalize (sqrt (rational->real x))))
+(put 'square-root '(rational) (lambda (x) (tag (square-root-rational x))))
