@@ -129,3 +129,8 @@
   (if (> low hi)
       '()
       (cons low (enumerate-interval (+ low 1) hi))))
+
+(define (my-filter p? items)
+  (cond ((null? items) '())
+        ((p? (car items)) (cons (car items) (my-filter p? (cdr items))))
+        (else (my-filter p? (cdr items)))))
