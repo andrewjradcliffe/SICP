@@ -10,7 +10,7 @@
 ;; Ex. 2.33
 
 (define (my-map p sequence)
-  (accumulate (lambda (x y) (cons (p x) y)) () sequence))
+  (accumulate (lambda (x y) (cons (p x) y)) '() sequence))
 
 (define (my-append seq1 seq2)
   (accumulate cons seq2 seq1))
@@ -43,7 +43,7 @@
 ;; Ex. 2.36
 (define (accumulate-n op init seqs)
   (if (null? (car seqs))
-      ()
+      '()
       (cons (accumulate op init (my-map car seqs))
             (accumulate-n op init (my-map cdr seqs)))))
 
@@ -59,7 +59,7 @@
   (map (lambda (r) (dot-product r v)) m))
 
 (define (transpose m)
-  (accumulate-n cons () m))
+  (accumulate-n cons '() m))
 
 (define (matrix-*-matrix m n)
   (let ((cols (transpose n)))
@@ -69,21 +69,21 @@
 ;; Ex. 2.38
 (= (fold-right / 1 (list 1 2 3)) (/ 3 2))
 (= (fold-left / 1 (list 1 2 3)) (/ 1 6))
-(equal? (fold-right list () (list 1 2 3)) (list 1 (list 2 (list 3 ()))))
-(equal? (fold-left list () (list 1 2 3)) (list (list (list () 1) 2) 3))
+(equal? (fold-right list '() (list 1 2 3)) (list 1 (list 2 (list 3 '()))))
+(equal? (fold-left list '() (list 1 2 3)) (list (list (list '() 1) 2) 3))
 
 ;; Ex. 2.39
 (define (reverse-right sequence)
-  (fold-right (lambda (x y) (append y (list x))) () sequence))
+  (fold-right (lambda (x y) (append y (list x))) '() sequence))
 
 (define (reverse-left sequence)
-  (fold-left (lambda (x y) (cons y x)) () sequence))
+  (fold-left (lambda (x y) (cons y x)) '() sequence))
 
 (define (copy-right sequence)
-  (fold-right cons () sequence))
+  (fold-right cons '() sequence))
 
 (define (copy-left sequence)
-  (fold-left (lambda (x y) (append x (list y))) () sequence))
+  (fold-left (lambda (x y) (append x (list y))) '() sequence))
 
 (equal? (reverse-right (list 1 2 3)) (list 3 2 1))
 (equal? (reverse-left (list 1 2 3)) (list 3 2 1))
@@ -94,29 +94,29 @@
   (fold-right (lambda (x y) (append y (if (pair? x)
                                           (list (deep-reverse-right x))
                                           (list x))))
-              ()
+              '()
               sequence))
 
 (define (deep-reverse-left sequence)
-  (fold-left (lambda (x y) (cons (if (pair? y) (deep-reverse-left y) y) x)) () sequence))
+  (fold-left (lambda (x y) (cons (if (pair? y) (deep-reverse-left y) y) x)) '() sequence))
 
 (deep-reverse-right '(1 2 3 (1 2)))
 (deep-reverse-left '(1 2 3 (1 2)))
 
 (define (last-left sequence)
-  (fold-left (lambda (x y) y) () sequence))
+  (fold-left (lambda (x y) y) '() sequence))
 
 (define (last-right sequence) ;; contrived, and also fails on the empty list
-  (car (fold-right (lambda (x y) (if (null? y) (cons x y) y)) () sequence)))
+  (car (fold-right (lambda (x y) (if (null? y) (cons x y) y)) '() sequence)))
 
 (define (last-pair-left sequence)
-  (cons (last-left sequence) ()))
+  (cons (last-left sequence) '()))
 
 
 ;;;; Nested Mappings
 
 (define (flatmap proc seq)
-  (accumulate append () (map proc seq)))
+  (accumulate append '() (map proc seq)))
 
 
 ;;;; Common utilities
@@ -127,5 +127,5 @@
 
 (define (enumerate-interval low hi)
   (if (> low hi)
-      ()
+      '()
       (cons low (enumerate-interval (+ low 1) hi))))
