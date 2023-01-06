@@ -59,7 +59,7 @@
 
 (define (same-parity-impl p? y)
   (if (null? y)
-      ()
+      '()
       (if (p? (car y))
           (cons (car y) (same-parity-impl p? (cdr y)))
           (same-parity-impl p? (cdr y)))))
@@ -70,7 +70,7 @@
 ;; Ex. 2.21
 (define (square-list items)
   (if (null? items)
-      ()
+      '()
       (cons (* (car items) (car items)) (square-list (cdr items)))))
 
 (define (square-list items)

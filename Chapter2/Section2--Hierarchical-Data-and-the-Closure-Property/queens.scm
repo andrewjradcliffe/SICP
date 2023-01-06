@@ -1,6 +1,6 @@
 ;; Ex. 2.42
 
-(define empty-board ())
+(define empty-board '())
 
 (define (adjoin-position new-row k rest-of-queens)
   (append rest-of-queens (list (list new-row k))))
@@ -62,7 +62,7 @@
   (newline)
   (newline)
   (let ((row (car (transpose positions))))
-    ;; ((row (fold-right (lambda (x y) (cons (car x) y)) () positions))) ;; Another way
+    ;; ((row (fold-right (lambda (x y) (cons (car x) y)) '() positions))) ;; Another way
     (for-each (lambda (k) (display-queen-row k row)) (enumerate-interval 1 (length row)))))
 
 (define ans (queens 4))

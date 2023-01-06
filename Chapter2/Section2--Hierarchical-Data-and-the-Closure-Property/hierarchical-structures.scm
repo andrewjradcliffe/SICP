@@ -85,7 +85,7 @@
 ;; Ex. 2.30
 
 (define (square-tree t)
-  (cond ((null? t) ())
+  (cond ((null? t) '())
         ((not (pair? t)) (* t t))
         (else (cons (square-tree (car t)) (square-tree (cdr t))))))
 
@@ -103,7 +103,7 @@
 ;; Ex. 2.31
 
 (define (tree-map proc t)
-  (cond ((null? t) ())
+  (cond ((null? t) '())
         ((not (pair? t) (proc t)))
         (else (cons (tree-map proc (car t)) (tree-map proc (cdr t))))))
 
