@@ -74,7 +74,7 @@
   (iter 1 n))
 (define (zeros n) (repeat 0 n))
 
-;; 2.90
+;; Ex. 2.90
 ;; In analogy to rectangular and polar, one creates sparse and dense packages,
 ;; each supporting the same set of operations. Then, one defines an abstraction which
 ;; provides a common interface for these operations. A method will be required for
@@ -84,4 +84,84 @@
 ;; are possible, e.g. sparse + dense yields a sparse, but this quickly becomes an
 ;; intricate design (outside scope of exercise).
 
+;; Ex. 2.91
+(define (div-terms L1 L2)
+  (if (empty-termlist? L1)
+      (list (the-empty-termlist) (the-empty-termlist))
+      (let ((t1 (first-term L1))
+            (t2 (first-term L2)))
+        (if (> (order t2) (order t1))
+            (list (the-empty-termlist) L1)
+            (let ((new-c (div (coeff t1) (coeff t2)))
+                  (new-o (- (order t1) (order t2))))
+              (let ((rest-of-result (div-terms (sub-terms L1 (mul-term-by-all-terms (make-term new-o new-c) L2)) L2)))
+                (list (adjoin-term (make-term new-o new-c) (car rest-of-result))
+                      (cadr rest-of-result))))))))
 
+;; Ex. 2.93
+(define (make-rat n d) (cons n d))
+;; change all occurrences of +, -, * to add, sub, mul
+
+;; Ex. 2.94
+
+(define (greatest-common-divisor a b) (apply-generic 'greatest-common-divisor a b))
+
+;; within install-polynomial-package
+(define (remainder-terms a b) (cadr (div-terms a b)))
+(define (gcd-poly p1 p2)
+  (if (same-variable? (variable p1) (variable p2))
+      (make-poly (variable p1) (gcd-terms (term-list p1) (term-list p2)))
+      (error "Polys not in same var -- GCD-POLY" (list p1 p2))))
+(put 'greatest-common-divisor '(polynomial polynomial) (lambda (a b) (tag (gcd-poly a b))))
+
+;; inside install-scheme-number-package
+(put 'greatest-common-divisor '(scheme-number scheme-number) (lambda (a b) (tag (gcd a b))))
+
+;; inside install-rational-package
+(define (make-rat n d)
+  (let ((g (greatest-common-divisor n d)))
+    (cons (div n g) (div d g))))
+
+;; Ex. 2.95
+;; P₁ : x² - 2x + 1
+;; P₂ : 11x² + 7
+;; P₃ : 13x + 5
+;; Q₁ : P₁P₂ = 11x⁴ - 22x³ + 18x² - 14x + 7
+;; Q₂ : P₁P₃ = 13x³ - 21x² + 3x + 5
+
+;; On the very first division, 11x⁴ / 13x³ = (11/13)x, an infinite term is introduced.
+;; Thus, we have inexactness in any non-rational representation.
+
+;; Ex. 2.96
+
+;; a
+(define (pseudoremainder-terms L1 L2)
+  (let ((o1 (order (first-term L1)))
+        (o2 (order (first-term L2)))
+        (c (coeff (first-term L2))))
+    (let ((factor (expt c (+ 1 (- o1 o2)))))
+      (cadr (div-terms (mul-term-by-all-terms (make-term 0 factor) L1) L2)))))
+
+(define (gcd-terms a b)
+  (if (empty-termlist? b)
+      a
+      (gcd-terms b (pseudoremainder-terms a b))))
+
+;; b
+(define (integer-gcd terms)
+  (let ((coeffs (filter (lambda (x) (not (pair? x))) (map coeff terms))))
+    (if (null? coeffs)
+        1
+        (accumulate gcd 0 coeffs))))
+
+(define (remove-common-factor-terms L)
+  (if (empty-termlist? L)
+      (the-empty-termlist)
+      (mul-term-by-all-terms (make-term 0 (/ 1 (integer-gcd L))) L)))
+
+(define (gcd-terms a b)
+  (if (empty-termlist? b)
+      (remove-common-factor-terms a)
+      (gcd-terms b (pseudoremainder-terms a b))))
+
+;; Ex 2.97
