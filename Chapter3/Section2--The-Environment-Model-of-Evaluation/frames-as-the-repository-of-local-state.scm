@@ -1,3 +1,5 @@
+;; 3.2.3 Frames as the Repository of Local State
+
 ;; Ex. 3.9
 
 (define (make-withdraw-v1 initial-amount)
