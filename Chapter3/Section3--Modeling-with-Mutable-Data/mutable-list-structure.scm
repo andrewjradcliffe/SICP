@@ -170,9 +170,9 @@
 (set-car! (cddr wwww) wwww)
 
 (define wwww-both '(a b c)) ; both top and bottom
-(set-car! (cdr wwww) (cddr wwww))
-(set-car! (cddr wwww) wwww)
-(set-cdr! (cddr wwww) wwww)
+(set-car! (cdr wwww-both) (cddr wwww-both))
+(set-car! (cddr wwww-both) wwww-both)
+(set-cdr! (cddr wwww-both) wwww-both)
 
 ;; Ex. 3.18
 
@@ -204,7 +204,9 @@
             true
             (begin
               (if (null? aux) (set! aux (list x)) (append! aux (list x)))
-              (or (iter (car x) (list x)) (iter (cdr x) aux))))
+              ;; (or (iter (car x) (list x)) (iter (cdr x) aux))
+              (or (iter (cdr x) aux) (iter (car x) (list x)))
+              ))
         false))
   (iter x '()))
 
@@ -213,10 +215,14 @@
 (has-cycle-2? y)
 (has-cycle-2? z)
 
-(has-cycle-2? ww)
-(has-cycle-2? www)
 (has-cycle-2? nr)
 (has-cycle-2? r3)
 (has-cycle-2? r4)
 (has-cycle-2? r7)
 
+
+(has-cycle-2? ww)
+(has-cycle-2? www)
+(has-cycle-2? www-both)
+(has-cycle-2? wwww)
+(has-cycle-2? wwww-both)
