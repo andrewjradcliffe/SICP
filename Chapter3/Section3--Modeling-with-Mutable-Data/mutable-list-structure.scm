@@ -110,6 +110,69 @@
 (count-pairs-2 z)
 
 
+;;                    +----------------------------
+;;                    |                           |
+;;                    |    +-------++-------+     |
+;;                    |    |       ||       |     |
+;;                    +--->|   O   ||   O---+-----+
+;;                         |   |   ||       |
+;;                         +---+---++---+---+
+;;                             |        ^
+;;                             |        |
+;;                             +--------+
+(define ww '(1 . 2))
+(set-car! ww ww)
+(set-cdr! ww ww)
+
+;;               +----------------------------------------------------------------------------+
+;;               |                                                                            |
+;;               |                                                                            |
+;;               v                                                                            |
+;;           +-------++-------+                +-------++-------+                +-------++---+---+
+;;           |       ||       |                |       ||       |                |       ||   |   |
+;;    +----->|   O   ||   O---+--------------->|   O   ||   O---+--------------->|   O   ||   O   |
+;;    |      |   |   ||       |                |   |   ||       |                |   |   ||       |
+;;    |      +---+---++-------+                +---+---++-------+                +---+---++-------+
+;;    |          |                                 |                                 |
+;;    |          |                                 |                                 |
+;;    |          v                                 |                                 v
+;;    |          a                                 |                                 c
+;;    |                                            |
+;;    |                                            |
+;;    +--------------------------------------------+
+
+(define www '(a b c)) ; just the bottom
+(set-car! (cdr www) www)
+(define www-both '(a b c)) ; both top and bottom
+(set-car! (cdr www-both) www-both)
+(set-cdr! (last-pair www-both) www-both)
+
+
+;;               +----------------------------------------------------------------------------+
+;;               |                                                                            |
+;;               |                                                                            |
+;;               v                                                                            |
+;;           +-------++-------+                +-------++-------+                +-------++---+---+
+;;           |       ||       |                |       ||       |                |       ||   |   |
+;;    +----->|   O   ||   O---+--------------->|   O   ||   O---+--------------->|   O   ||   O   |
+;;    |      |   |   ||       |                |   |   ||       |         +----->|   |   ||       |
+;;    |      +---+---++-------+                +---+---++-------+         |      +---+---++-------+
+;;    |          |                                 |                      |          |
+;;    |          |                                 |                      |          |
+;;    |          v                                 +----------------------+          |
+;;    |          a                                                                   |
+;;    |                                                                              |
+;;    |                                                                              |
+;;    +-------------------------------------------------------------------------------
+
+(define wwww '(a b c)) ; just the bottom
+(set-car! (cdr wwww) (cddr wwww))
+(set-car! (cddr wwww) wwww)
+
+(define wwww-both '(a b c)) ; both top and bottom
+(set-car! (cdr wwww) (cddr wwww))
+(set-car! (cddr wwww) wwww)
+(set-cdr! (cddr wwww) wwww)
 
 ;; Ex. 3.18
 
@@ -134,7 +197,26 @@
     (iter-simple x '()))
   (iter x '()))
 
+(define (has-cycle-2? x)
+  (define (iter x aux)
+    (if (pair? x)
+        (if (any-eq? x aux)
+            true
+            (begin
+              (if (null? aux) (set! aux (list x)) (append! aux (list x)))
+              (or (iter (car x) (list x)) (iter (cdr x) aux))))
+        false))
+  (iter x '()))
 
-(has-cycle? x)
-(has-cycle? y)
-(has-cycle? z)
+
+(has-cycle-2? x)
+(has-cycle-2? y)
+(has-cycle-2? z)
+
+(has-cycle-2? ww)
+(has-cycle-2? www)
+(has-cycle-2? nr)
+(has-cycle-2? r3)
+(has-cycle-2? r4)
+(has-cycle-2? r7)
+
