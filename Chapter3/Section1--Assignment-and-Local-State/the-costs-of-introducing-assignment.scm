@@ -1,6 +1,6 @@
 ;; 3.1.3 The Costs of Introducing Assignment
 
-;; Ex 3.7
+;; Ex. 3.7
 
 (define (make-joint account password new-password)
   (if (correct-password? account password)
@@ -34,7 +34,7 @@
 ((my-acc-2 'orson-wells 'deposit) 0)
 
 
-;; Ex 3.8
+;; Ex. 3.8
 
 (define f
   (let ((n 0))
