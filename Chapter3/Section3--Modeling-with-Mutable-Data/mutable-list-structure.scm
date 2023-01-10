@@ -108,3 +108,33 @@
 (count-pairs-2 x)
 (count-pairs-2 y)
 (count-pairs-2 z)
+
+
+
+;; Ex. 3.18
+
+(define (has-cycle? x)
+  (define (iter x aux)
+    (if (pair? x)
+        (if (any-eq? x aux)
+            (has-cycle-simple? x)
+            (begin
+              (if (null? aux) (set! aux (list x)) (append! aux (list x)))
+              (or (iter (car x) aux) (iter (cdr x) aux))))
+        false))
+  (define (has-cycle-simple? x)
+    (define (iter-simple x aux)
+      (if (pair? x)
+          (if (any-eq? x aux)
+              true
+              (begin
+                (if (null? aux) (set! aux (list x)) (append! aux (list x)))
+                (or (iter-simple (car x) aux) (iter-simple (cdr x) aux))))
+          false))
+    (iter-simple x '()))
+  (iter x '()))
+
+
+(has-cycle? x)
+(has-cycle? y)
+(has-cycle? z)
