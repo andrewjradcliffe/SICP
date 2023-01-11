@@ -79,16 +79,24 @@
 (define (collect-deque deque) (map car (front-ptr deque)))
 (define (print-deque deque)
   (newline)
-  (display (collect-deque))
+  (display (collect-deque deque))
   (newline))
 
+;; front-only tests
 (define q1 (make-deque))
 
 (front-insert-deque! q1 'a)
 (front-insert-deque! q1 'b)
 (front-insert-deque! q1 'c)
 (print-deque q1)
+(front-delete-deque! q1)
+(print-deque q1)
+(front-delete-deque! q1)
+(print-deque q1)
+(front-delete-deque! q1)
+(print-deque q1)
 
+;; rear-only tests
 (define q2 (make-deque))
 (rear-insert-deque! q2 'a)
 (rear-insert-deque! q2 'b)
@@ -103,3 +111,12 @@
 ;; Should error
 (rear-delete-deque! q2)
 (front-delete-deque! q2)
+
+;; mixed tests
+(define q3 (make-deque))
+(rear-insert-deque! q3 'd)
+(front-insert-deque! q3 'a)
+(front-insert-deque! q3 'b)
+(print-deque q3)
+(rear-insert-deque! q3 '?)
+(print-deque q3)
