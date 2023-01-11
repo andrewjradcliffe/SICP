@@ -176,28 +176,11 @@
 
 ;; Ex. 3.18
 
-(define (has-cycle? x)
-  (define (iter x aux)
-    (if (pair? x)
-        (if (any-eq? x aux)
-            (has-cycle-simple? x)
-            (begin
-              (if (null? aux) (set! aux (list x)) (append! aux (list x)))
-              (or (iter (car x) aux) (iter (cdr x) aux))))
-        false))
-  (define (has-cycle-simple? x)
-    (define (iter-simple x aux)
-      (if (pair? x)
-          (if (any-eq? x aux)
-              true
-              (begin
-                (if (null? aux) (set! aux (list x)) (append! aux (list x)))
-                (or (iter-simple (car x) aux) (iter-simple (cdr x) aux))))
-          false))
-    (iter-simple x '()))
-  (iter x '()))
+;; Actually, this solution goes beyond the requirement of cycle via successive cdrs.
+;; It finds cycles by testing successive cdrs, then applying the same methodology to each
+;; car; for each car, a fresh auxiliary data is supplied.
 
-(define (has-cycle-2? x)
+(define (has-cycle? x)
   (define (iter x aux)
     (if (pair? x)
         (if (any-eq? x aux)
@@ -211,18 +194,24 @@
   (iter x '()))
 
 
-(has-cycle-2? x)
-(has-cycle-2? y)
-(has-cycle-2? z)
+(has-cycle? x)
+(has-cycle? y)
+(has-cycle? z)
 
-(has-cycle-2? nr)
-(has-cycle-2? r3)
-(has-cycle-2? r4)
-(has-cycle-2? r7)
+(has-cycle? nr)
+(has-cycle? r3)
+(has-cycle? r4)
+(has-cycle? r7)
 
 
-(has-cycle-2? ww)
-(has-cycle-2? www)
-(has-cycle-2? www-both)
-(has-cycle-2? wwww)
-(has-cycle-2? wwww-both)
+(has-cycle? ww)
+(has-cycle? www)
+(has-cycle? www-both)
+(has-cycle? wwww)
+(has-cycle? wwww-both)
+
+;; Ex. 3.19
+;; Perhaps by temporarily breaking cycle?
+
+;; Ex. 3.20
+;; See p. 56
