@@ -61,3 +61,77 @@
         (set-cdr! record value)
         (set-cdr! table (cons (cons key value) (cdr table)))))
   'ok)
+
+;; Ex 3.26
+;; One can directly re-use the machinery of p. 155-161, with a few modifications.
+;; The entry in the set must now represent the pair of key, value. Assuming that
+;; we are dealing with either symbols or numbers, we can use the key as the source of
+;; the ordering, in which case, the entry can be the pair itself, stored on
+;; the first element of (list entry left right).
+;; We need to update each use of =, >, < which acts on (entry set).
+;; In fact, since these call sites follow a common pattern, it is simplest to provide
+;; a separate implementation that acts on x := (key . value) and (entry set).
+(define (key=? x y) (= (car x) (car y))) ;; We substitute key=?, key>?, key<?
+(define (key>? x y) (> (car x) (car y))) ;; for =, >, <, respectively.
+(define (key<? x y) (< (car x) (car y))) ;; element-of-set? is then has-key?
+(define (has-key? key table) (element-of-set? (cons key '()) (cdr table)))
+(define (element-of-set? x set)
+  (cond ((null? set) false)
+        ((key=? x (entry set)) true)
+        ((key<? x (entry set))
+         (element-of-set? x (left-branch set)))
+        ((key>? x (entry set))
+         (element-of-set? x (right-branch set)))))
+
+;; Insertion requires a mutating adjoin-set!
+;; Also, we must have a non-empty tree to begin with.
+(define (set-entry! tree x) (set-car! tree x))
+(define (set-left-branch! tree x) (set-car! (cdr tree) x))
+(define (set-right-branch! tree x) (set-car! (cddr tree) x))
+
+(define (make-table) (cons '*table* (make-tree '() '() '())))
+
+(define (adjoin-set! x set)
+  (cond ((key=? x (entry set))
+         (set-entry! set x))
+        ((key<? x (entry set))
+         (if (null? (left-branch set))
+             (set-left-branch! set (make-tree x '() '()))
+             (adjoin-set! x (left-branch set))))
+        ((key>? x (entry set))
+         (if (null? (right-branch set))
+             (set-right-branch! set (make-tree x '() '()))
+             (adjoin-set! x (right-branch set))))))
+
+(define (insert! key value table)
+  (if (null? (entry (cdr table)))
+      (set-entry! (cdr table) (cons key value))
+      (adjoin-set! (cons key value) (cdr table)))
+  'ok)
+
+(define (lookup key table)
+  (cdr (assoc key (cdr table))))
+(define (assoc key set)
+  (cond ((null? set) false)
+        ((= key (car (entry set))) (entry set))
+        ((< key (car (entry set)))
+         (assoc key (left-branch set)))
+        ((> key (car (entry set)))
+         (assoc key (right-branch set)))))
+
+(define (make-tree entry left right)
+  (list entry left right))
+(define (entry tree) (car tree))
+(define (left-branch tree) (cadr tree))
+(define (right-branch tree) (caddr tree))
+
+(define tbl (make-table))
+(insert! 1 'a tbl)
+(insert! 2 'b tbl)
+(insert! 3 'c tbl)
+(insert! 100 'd tbl)
+(insert! 25  'e tbl)
+
+(lookup 3 tbl)
+
+(has-key? 3 tbl)
