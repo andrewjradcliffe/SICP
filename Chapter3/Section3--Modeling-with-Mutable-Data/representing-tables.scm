@@ -38,3 +38,26 @@
 (lookup 'c tbl)
 (insert! '(1 2 3) 4 tbl)
 (lookup '(1 2 3) tbl)
+
+;; Ex 3.25
+;; In a certain sense, the one-dimensional table satisfies the requirements,
+;; as it already works with a list of keys, i.e. a list of keys is just a key.
+
+(define (make-table) (list '*table*))
+(define (assoc key records)
+  (cond ((null? records) false)
+        ((equal? key (caar records)) (car records))
+        (else (assoc key (cdr records)))))
+
+(define (lookup key table)
+  (let ((record (assoc key (cdr table))))
+    (if record
+        (cdr record)
+        false)))
+
+(define (insert! key value table)
+  (let ((record (assoc key (cdr table))))
+    (if record
+        (set-cdr! record value)
+        (set-cdr! table (cons (cons key value) (cdr table)))))
+  'ok)
