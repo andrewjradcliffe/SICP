@@ -142,6 +142,7 @@
 ;; the carry is available. Thus, one waits at least as long as n * CARRY delay of full-adder.
 ;; If the or-gate-delay is greater than (1 and-gate-delay + 1 inverter-delay),
 ;; then the SUM and CARRY delay of a full-adder are equal.
+;; In such a case, the total time is n * (2 and-gate-delay + 2 or-gate-delay)
 
 
 (define (ripple-carry-adder A B S C)
