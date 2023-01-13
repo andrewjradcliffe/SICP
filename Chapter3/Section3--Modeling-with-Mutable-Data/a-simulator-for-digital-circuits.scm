@@ -88,3 +88,74 @@
 
 ;; Ex 3.30
 
+;; half-adder:     2 and-gate
+;;                 1 or-gate
+;;                 1 inverter
+;; full-adder:     2 half-adder    =    4 and-gate
+;;                 1 or-gate            3 or-gate
+;;                                      2 inverter
+;; ripple-carry:   n full-adder    =    4n and-gate
+;; -adder                               3n or-gate
+;;                                      2n or-gate
+;; Sequential as carry must be available before any steps in each full-adder
+;; can occur. In a full-adder, the or-gate to which A is sent is technically
+;; free of prior delays, but it requires the signal from the half-adder
+;; to which B is sent in order to compute its value. Hence, one must wait for the
+;; lower half-adder before proceeding with the upper half-adder.
+;; In essence, the delay is equal to the longest path through the circuit.
+;; ---
+;; Time spent in half-adder depends on delay of components.
+;; If or-gate-delay > and-gate-delay, then the inverter can operate in parallel
+;; with the remainder of the or-gate-delay. The final and-gate waits on both
+;; branches, hence, the delay can be expressed as:
+;; SUM delay:
+;;                 1 and-gate-delay
+;;                 + max {(1 and-gate-delay + 1 inverter-delay), 1 or-gate-delay}
+;; CARRY delay:
+;;                 1 and-gate-delay
+;; ---
+;; Time spent in the full-adder is:
+;; SUM delay:
+;;                 SUM delay of the bottom half-adder
+;;                 + SUM delay of the top half-adder
+;;
+;;                 = 2 and-gate-delay
+;;                 + 2 max {(1 and-gate-delay + 1 inverter-delay), 1 or-gate-delay}
+;; CARRY delay:
+;;                 SUM delay of the bottom half-adder
+;;                 + CARRY delay of top half-adder
+;;                 + 1 or-gate-delay
+;;
+;;                 = 2 and-gate-delay
+;;                 + max {(1 and-gate-delay + 1 inverter-delay), 1 or-gate-delay}
+;;                 + 1 or-gate-delay
+;; ---
+;; Time spent in ripple-carry-adder for n-bit binary numbers
+;; SUM delay:
+;;                 n * SUM delay of full-adder
+;;
+;; CARRY delay:
+;;                 n * CARRY delay of full-adder
+;;
+;; However, the sequential nature of the ripple-carry-adder means that while
+;; the A and B can be loaded onto the full-adder, nothing can proceed until
+;; the carry is available. Thus, one waits at least as long as n * CARRY delay of full-adder.
+;; If the or-gate-delay is greater than (1 and-gate-delay + 1 inverter-delay),
+;; then the SUM and CARRY delay of a full-adder are equal.
+
+
+(define (ripple-carry-adder A B S C)
+  (cond ((and (= (length A) (length B)) (= (length A) (length S)))
+         (define (iter A B C-in S C-out)
+           (cond ((null? (cdr A))
+                  (full-adder (car A) (car B) C-in (car S) C-out))
+                 (else
+                  (let ((new-C (make-wire)))
+                    (full-adder (car A) (car B) C-in (car S) new-C)
+                    (iter (cdr A) (cdr B) new-C (cdr S) C-out)))))
+         (iter (reverse A) (reverse B) (make-wire) (reverse S) C)
+         'ok)
+        (else
+         (error "Unequal lengths" (list A B S)))))
+
+
