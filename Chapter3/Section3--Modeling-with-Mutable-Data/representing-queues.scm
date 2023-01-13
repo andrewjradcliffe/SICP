@@ -1,5 +1,36 @@
 ;; 3.3.2 Representing Queues
 
+;; Plain, non-procedural queue. Used in 3.3.4.
+
+(define (make-queue) (cons '() '()))
+(define (empty-queue? queue) (null? (front-ptr-queue queue)))
+
+(define (front-ptr-queue queue) (car queue))
+(define (rear-ptr-queue queue) (cdr queue))
+(define (set-front-ptr-queue! queue item) (set-car! queue item))
+(define (set-rear-ptr-queue! queue item) (set-cdr! queue item))
+(define (front-queue queue)
+  (if (empty-queue? queue)
+      (error "FRONT called with an empty queue" queue)
+      (car (front-ptr-queue queue))))
+(define (insert-queue! queue item)
+  (let ((new-pair (cons item '())))
+    (cond ((empty-queue? queue)
+           (set-front-ptr-queue! queue new-pair)
+           (set-rear-ptr-queue! queue new-pair)
+           queue)
+          (else
+           (set-cdr! (rear-ptr-queue queue) new-pair)
+           (set-rear-ptr-queue! queue new-pair)
+           queue))))
+(define (delete-queue! queue)
+  (cond ((empty-queue? queue)
+         (error "DELETE called with an empty queue" queue))
+        (else
+         (set-front-ptr-queue! queue (cdr (front-ptr-queue queue)))
+         queue)))
+
+
 ;; Ex. 3.21
 (define (print-queue queue)
   (newline)
