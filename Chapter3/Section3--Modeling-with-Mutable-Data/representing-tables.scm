@@ -39,7 +39,7 @@
 (insert! '(1 2 3) 4 tbl)
 (lookup '(1 2 3) tbl)
 
-;; Ex 3.25
+;; Ex. 3.25
 ;; In a certain sense, the one-dimensional table satisfies the requirements,
 ;; as it already works with a list of keys, i.e. a list of keys is just a key.
 
@@ -62,7 +62,7 @@
         (set-cdr! table (cons (cons key value) (cdr table)))))
   'ok)
 
-;; Ex 3.26
+;; Ex. 3.26
 ;; One can directly re-use the machinery of p. 155-161, with a few modifications.
 ;; The entry in the set must now represent the pair of key, value. Assuming that
 ;; we are dealing with either symbols or numbers, we can use the key as the source of
@@ -135,3 +135,40 @@
 (lookup 3 tbl)
 
 (has-key? 3 tbl)
+
+;; Ex. 3.27
+;; See p. 61-62 for the environment diagrams and associated notes.
+;; The scheme will not work if we defined memo-fib to be (memoize fib)
+;; as fib recursively calls itself. The table is searched only for the initial
+;; value, but fib itself does not know of the table. Thus, upon failing to find
+;; a result for the initial value, a regular call of fib is initiated.
+;; If we want to realize savings on anything other than duplicated calls
+;; (e.g. (memo-fib 3) (memo-fib 3)) we must make recursive functions
+;; call their memoized version at each call-site.
+
+
+(define (fib n)
+  (cond ((= n 0) 0)
+        ((= n 1) 1)
+        (else (+ (fib (- n 1))
+                 (fib (- n 2))))))
+
+(define memo-fib
+  (memoize (lambda (n)
+             (cond ((= n 0) 0)
+                   ((= n 1) 1)
+                   (else (+ (memo-fib (- n 1))
+                            (memo-fib (- n 2))))))))
+(define (memoize f)
+  (let ((table (make-table)))
+    (lambda (x)
+      (let ((previously-computed-result (lookup x table)))
+        (or previously-computed-result
+            (let ((result (f x)))
+              (insert! x result table)
+              result))))))
+
+(memo-fib 100)
+
+(define memo-fib-2 (memoize fib))
+(memo-fib-2 30)
