@@ -163,6 +163,7 @@
 ;; Ex. 3.31, Ex 3.32
 ;; See p. 64 of notes.
 
+;; Example 1
 (define the-agenda (make-agenda))
 (define inverter-delay 2)
 (define and-gate-delay 3)
@@ -182,6 +183,7 @@
 (set-signal! input-2 1)
 (propagate)
 
+;; Example 2
 (define the-agenda (make-agenda))
 (define a-1 (make-wire))
 (define a-2 (make-wire))
@@ -202,6 +204,27 @@
 (propagate)
 
 (current-time the-agenda)
+
+;; Example 3
+(define (make-wire-with-probe name)
+  (let ((w (make-wire)))
+    (probe name w)
+    w))
+(define the-agenda (make-agenda))
+(define C (make-wire-with-probe 'C-out))
+(define As (map (lambda (n) (make-wire-with-probe (string "a-" n))) (enumerate-interval 1 10)))
+(define Bs (map (lambda (n) (make-wire-with-probe (string "b-" n))) (enumerate-interval 1 10)))
+(define Ss (map (lambda (n) (make-wire-with-probe (string "s-" n))) (enumerate-interval 1 10)))
+
+(ripple-carry-adder As Bs Ss C)
+
+(set-signal! (car As) 1)
+(propagate)
+(set-signal! (car Bs) 1)
+(propagate)
+
+(map (lambda (x) (set-signal! x 1)) As)
+(map (lambda (x) (set-signal! x 1)) Bs)
 
 ;;;;;;;;;;;;;;;;
 ;; Other procedures necessary to complete working simulator
