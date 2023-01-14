@@ -146,14 +146,14 @@
 ;; Therefore, the total time is n * (2 and-gate-delay + 2 or-gate-delay)
 
 (define (ripple-carry-adder A B S C)
+  (define (iter A B C-in S C-out)
+    (cond ((null? (cdr A))
+           (full-adder (car A) (car B) C-in (car S) C-out))
+          (else
+           (let ((new-C (make-wire)))
+             (full-adder (car A) (car B) C-in (car S) new-C)
+             (iter (cdr A) (cdr B) new-C (cdr S) C-out)))))
   (cond ((and (= (length A) (length B)) (= (length A) (length S)))
-         (define (iter A B C-in S C-out)
-           (cond ((null? (cdr A))
-                  (full-adder (car A) (car B) C-in (car S) C-out))
-                 (else
-                  (let ((new-C (make-wire)))
-                    (full-adder (car A) (car B) C-in (car S) new-C)
-                    (iter (cdr A) (cdr B) new-C (cdr S) C-out)))))
          (iter (reverse A) (reverse B) (make-wire) (reverse S) C)
          'ok)
         (else
