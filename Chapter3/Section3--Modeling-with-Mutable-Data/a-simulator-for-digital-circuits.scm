@@ -73,7 +73,7 @@
 
 ;; Other useful gates
 (define (nand-gate a b output)
-  (let (e (make-wire))
+  (let ((e (make-wire)))
     (and-gate a b e)
     (inverter e output))
   'ok)
@@ -86,7 +86,7 @@
   'ok)
 
 
-;; Ex 3.30
+;; Ex. 3.30
 
 ;; half-adder:     2 and-gate
 ;;                 1 or-gate
