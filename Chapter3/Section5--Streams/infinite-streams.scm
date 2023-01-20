@@ -5,6 +5,8 @@
 
 (define integers (integers-starting-from 1))
 
+(define ones (cons-stream 1 ones))
+
 (define (stream-null? s) (null? s))
 (define (scale-stream stream factor)
   (stream-map (lambda (x) (* x factor)) stream))
@@ -18,6 +20,29 @@
 
 (define (add-streams s1 s2)
   (stream-map + s1 s2))
+
+(define (scale-stream stream factor)
+  (stream-map (lambda (x) (* x factor)) stream))
+
+(define (negate-stream s) (scale-stream s -1))
+
+(define (sub-streams s1 s2) (add-stream s1 (negate-stream s2)))
+
+;; not very useful on infinite streams
+(define (stream-collect s)
+  (if (stream-null? s)
+      '()
+      (cons (stream-car s)
+            (stream-collect (stream-cdr s)))))
+
+;; more practical
+(define (stream-collect-n s n)
+  (define (iter s m)
+    (if (> m n)
+        '()
+        (cons (stream-car s)
+              (iter (stream-cdr s) (+ m 1)))))
+  (iter s 0))
 
 ;; Ex. 3.53
 ;; The elements are 1,2,4,8,16,... with the next element twice the last.
