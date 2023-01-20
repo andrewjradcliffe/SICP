@@ -168,5 +168,21 @@
   (cons-stream (* (stream-car s1) (stream-car s2))
                (add-streams (mul-series (stream-cdr s1) s2)
                             (mul-series s1 (stream-cdr s2)))))
+;; Pascal's triangle
+(stream-collect-n (mul-series ones ones) 10)
+;;                1
+;;               1 1
+;;              1 2 1
+;;             1 3 3 1
+;;            1 4 6 4 1
+;;               ...
+;;
+;; Clearly, this mul-series is wrong.
+
+(define (mul-series s1 s2))
 
 
+(define (streaming-exp-2 x)
+  (partial-sums (power-series (mul-series exp-series ones) x)))
+
+(stream-ref (streaming-exp-2 5.0) 15)
