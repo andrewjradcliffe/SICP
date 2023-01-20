@@ -1,5 +1,10 @@
 ;; 3.5.2 Infinite Streams
 
+(define (integers-starting-from n)
+  (cons-stream n (integers-starting-from (+ n 1))))
+
+(define integers (integers-starting-from 1))
+
 (define (stream-null? s) (null? s))
 (define (scale-stream stream factor)
   (stream-map (lambda (x) (* x factor)) stream))
@@ -10,6 +15,43 @@
 (define (display-line x)
   (newline)
   (display x))
+
+(define (add-streams s1 s2)
+  (stream-map + s1 s2))
+
+;; Ex. 3.53
+;; The elements are 1,2,4,8,16,... with the next element twice the last.
+;; Specifically, the elements are powers of 2, when starting from 0, or
+;; m * 2^i where i is the index in the stream and m is some pre-factor.
+;; See note on p.94 for illustrative figure.
+(define s (cons-stream 1 (add-streams s s)))
+
+
+;; Ex. 3.54
+(define (mul-streams s1 s2)
+  (stream-map * s1 s2))
+
+(define factorials (cons-stream 1 (mul-streams factorials integers)))
+
+;; Ex. 3.55
+
+;; This depends on memo-proc being used to define delay, i.e. call-by-need.
+;; This is not ideal -- see the implementation below.
+(define (partial-sums-mut s)
+  (let ((sum 0))
+    (define (accum x)
+      (set! sum (+ x sum))
+      sum)
+    (stream-map accum s)))
+
+;; The preferred implementation
+(define (partial-sums s)
+  (define (iter sum s)
+    (if (stream-null? s)
+        the-empty-stream
+        (cons-stream (+ sum (stream-car s))
+                     (iter (+ sum (stream-car s)) (stream-cdr s)))))
+  (iter 0 s))
 
 ;; Ex. 3.56
 
