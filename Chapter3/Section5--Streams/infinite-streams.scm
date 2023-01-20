@@ -53,6 +53,7 @@
 
 
 ;; Ex. 3.54
+
 (define (mul-streams s1 s2)
   (stream-map * s1 s2))
 
@@ -103,3 +104,69 @@
                                        (scale-stream S 5)))))
 
 (stream-car (stream-cdr S))
+
+;; Ex. 3.57
+;; See p. 95 for diagram and result.
+
+;; Ex. 3.58
+;; Seemingly, these are the stream of coefficients produced by long division,
+;; at least for radix=10.
+
+(define (expand num den radix)
+  (cons-stream
+   (quotient (* num radix) den)
+   (expand (remainder (* num radix) den) den radix)))
+
+(stream-collect-n (expand 1 7 10) 10)
+(stream-collect-n (expand 3 8 10) 10)
+
+(stream-collect-n (expand 1 7 2) 10)
+(stream-collect-n (expand 3 8 2) 10)
+
+;; Ex. 3.59
+
+;; a
+
+(define (integrate-series s)
+  (stream-map / s integers))
+
+;; b
+
+(define exp-series
+  (cons-stream 1 (integrate-series exp-series)))
+
+(define cosine-series
+  (cons-stream 1 (integrate-series (negate-stream sine-series))))
+
+(define sine-series
+  (cons-stream 0 (integrate-series cosine-series)))
+
+(define (partial-products s)
+  (define (iter product s)
+    (if (stream-null? s)
+        the-empty-stream
+        (cons-stream (* product (stream-car s))
+                     (iter (* product (stream-car s)) (stream-cdr s)))))
+  (iter 1 s))
+
+(define (streaming-expt x)
+  (partial-products (cons-stream 1 (scale-stream ones x))))
+
+(define (power-series s x)
+  (mul-streams s (streaming-expt x)))
+
+(define (streaming-exp x)
+  (partial-sums (power-series exp-series x)))
+(define (streaming-cosine x)
+  (partial-sums (power-series cosine-series x)))
+(define (streaming-sine x)
+  (partial-sums (power-series sine-series x)))
+
+;; Ex. 3.60
+
+(define (mul-series s1 s2)
+  (cons-stream (* (stream-car s1) (stream-car s2))
+               (add-streams (mul-series (stream-cdr s1) s2)
+                            (mul-series s1 (stream-cdr s2)))))
+
+
