@@ -31,7 +31,10 @@
 (define (mul-streams s1 s2)
   (stream-map * s1 s2))
 
+;; this gives n factorial as nth element
 (define factorials (cons-stream 1 (mul-streams factorials integers)))
+;; gives n+1 factorial as nth element
+(define factorials (cons-stream 1 (mul-streams factorials (stream-cdr integers))))
 
 ;; Ex. 3.55
 
