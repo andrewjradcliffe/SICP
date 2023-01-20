@@ -184,9 +184,39 @@
                (add-streams (scale-stream (stream-cdr s1) (stream-car s2))
                             (mul-series s1 (stream-cdr s2)))))
 
-(define (streaming-sin-squared x)
+(define (streaming-cosine-squared x)
+  (partial-sums (power-series (mul-series cosine-series cosine-series) x)))
+
+(define (streaming-sine-squared x)
   (partial-sums (power-series (mul-series sine-series sine-series) x)))
 
-(stream-ref (streaming-sin-squared 0.5) 30)
+(stream-ref (streaming-sine-squared 0.5) 30)
 
 (define (sine-squared x) (* (sin x) (sin x)))
+
+;; Expressed as sums of the partial sums of the respective power series
+;; i.e. sin(x)^2 + cos(x)^2 where the nth term in the sequence is the sum of
+;; the nth partial sum in the sine power series evaluated at x
+;; and the nth partial sum in the cosine power series evaluated at x.
+;;
+;; This demonstrates that the identity holds at each step of the respective power series.
+;; An interesting aside, but doubles computational overhead.
+(define (streaming-sine-cosine-identity x)
+  (add-streams (streaming-sine-squared x) (streaming-cosine-squared x)))
+
+;; Expressed as power series constructed from the power series of the constituents,
+;; thereby computing a set of coefficients for the power series of sin(x)^2 + cos(x)^2
+(define (sine-cosine-identity x)
+  (partial-sums (power-series (add-streams (mul-series sine-series sine-series)
+                                           (mul-series cosine-series cosine-series))
+                              x)))
+
+;; Computing the respective coefficients demonstrates the result which we would obtain
+;; from algebraic simplification.
+;; prints (1 0 0 0 0 0 0 0 0 0)
+(stream-collect-n (add-streams (mul-series sine-series sine-series)
+                               (mul-series cosine-series cosine-series))
+                  10)
+
+
+(stream-ref (streaming-sine-cosine-identity 0.5) 10)
