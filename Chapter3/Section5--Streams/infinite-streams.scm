@@ -7,6 +7,19 @@
 
 (define ones (cons-stream 1 ones))
 
+
+;; Sieve of Eratosthenes
+(define (divisible? x y) (= (remainder x y) 0))
+(define (sieve stream)
+  (cons-stream
+   (stream-car stream)
+   (sieve (stream-filter
+           (lambda (x) (not (divisible? x (stream-car stream))))
+           (stream-cdr stream)))))
+(define primes (sieve (integers-starting-from 2)))
+
+
+;; Stream operations
 (define (stream-null? s) (null? s))
 (define (scale-stream stream factor)
   (stream-map (lambda (x) (* x factor)) stream))
