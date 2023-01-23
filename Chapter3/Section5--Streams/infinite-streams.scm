@@ -220,3 +220,32 @@
 
 
 (stream-ref (streaming-sine-cosine-identity 0.5) 10)
+
+
+;; Ex. 3.61
+
+(define (invert-unit-series s)
+  (define x
+    (cons-stream 1
+                 (mul-series (negate-stream (stream-cdr s))
+                             x)))
+  x)
+
+;; Ex. 3.62
+
+(define (invert-series s)
+  (if (= (stream-car s) 0)
+      (error "First term in series is 0" s)
+      (scale-stream (invert-unit-series (scale-stream s (/ 1 (stream-car s))))
+                    (/ 1 (stream-car s)))))
+
+(define (div-series s1 s2)
+  (mul-series s1 (invert-series s2)))
+
+
+(define tangent-series (div-series sine-series cosine-series))
+
+(define (streaming-tangent x)
+  (partial-sums (power-series tangent-series x)))
+
+(stream-ref (streaming-tangent 0.5) 10)
