@@ -1,6 +1,7 @@
 ;; 3.2.3 Frames as the Repository of Local State
 
 ;; Ex. 3.9
+;; See p. 50 for illustration
 
 (define (make-withdraw-v1 initial-amount)
   (let ((balance initial-amount))
@@ -29,3 +30,13 @@
 (define W1-v2 (make-withdraw-v2 100))
 (W1-v2 50)
 (W1-v2 25)
+
+
+;; Ex. 3.10
+;; See p. 51, 52 for illustration
+
+;; Ex. 3.11
+;; See p. 53 for illustration
+
+;; Ex. 3.12
+;; See p. 53 for illustration
