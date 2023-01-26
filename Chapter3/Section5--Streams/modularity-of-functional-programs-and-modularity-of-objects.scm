@@ -45,6 +45,28 @@
 
 ;; Ex. 3.81
 
+(define (make-rand random-init)
+  (define random-numbers
+    (cons-stream random-init
+                 (stream-map rand-update random-numbers)))
+  (define (rand-iter rest request-stream)
+    (if (eq? (stream-car request-stream) 'generate)
+        (cons-stream (stream-car rest)
+                     (rand-iter (stream-cdr rest) (stream-cdr request-stream)))
+        (cons-stream (stream-car random-numbers)
+                     (rand-iter random-numbers (stream-cdr request-stream)))))
+  (define (rand request-stream)
+    (rand-iter random-numbers request-stream))
+  rand)
+
+(define rand (make-rand 308))
+(define requests-g (cons-stream 'generate requests-g))
+(define requests-r (cons-stream 'reset requests-r))
+(define requests (interleave requests-g (interleave requests-g requests-r)))
+(define nums (rand requests))
+
+(stream-collect-n nums 10)
+
 ;; Ex. 3.82
 
 (define (uniform-random a b u)
