@@ -51,7 +51,7 @@
 ;; more practical
 (define (stream-collect-n s n)
   (define (iter s m)
-    (if (> m n)
+    (if (>= m n)
         '()
         (cons (stream-car s)
               (iter (stream-cdr s) (+ m 1)))))
