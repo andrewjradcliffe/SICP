@@ -428,12 +428,11 @@
 ;;
 ;; Version 2:
 ;;
-;; ((let while-iter ()
+;; (let while-iter ()
 ;;   (if (not <predicate>)
 ;;       'false
 ;;       (begin <body>
 ;;              (while-iter))))
-;;  (while-iter))
 ;;
 ;;
 ;; Both versions are written in tail-recursive form -- transpose the order of
@@ -501,12 +500,11 @@
 ;;
 ;; Transformed to derived expression:
 ;;
-;; ((let until-iter ()
+;; (let until-iter ()
 ;;   (begin <body>
 ;;          (if <predicate>
 ;;              'true
 ;;              (until-iter))))
-;;  (until-iter))
 
 (define (until? exp) (tagged-list? exp 'while))
 (define (until-predicate exp) (cadr exp))
@@ -549,10 +547,9 @@
 ;; rather than use while. This simplifies the code despite the fact that it can be
 ;; expressed using while.
 ;;
-;; ((let do-iter '()
+;; (let do-iter '()
 ;;   (begin <body>
 ;;          (do-iter)))
-;;  (do-iter))
 
 
 (define (do? exp) (tagged-list? exp 'do))
