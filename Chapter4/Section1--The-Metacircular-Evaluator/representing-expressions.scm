@@ -369,3 +369,122 @@
       (cons (make-lambda (let-variables exp)
                          (let-body exp))
             (let-exps exp))))
+
+;; See p. 117-120 for an interesting illustration of why the following does not work.
+(define (fib n)
+  (let ((fib-iter (lambda (a b count)
+                    (if (= count 0)
+                        b
+                        (fib-iter (+ a b) a (- count 1)))))
+        (a 1)
+        (b 0)
+        (count n))
+    (fib-iter a b count)))
+
+;; Expression created by Version 1.
+(define (fib-1 n)
+  (define fib-iter (lambda (a b count)
+                     (if (= count 0)
+                         b
+                         (fib-iter (+ a b) a (- count 1)))))
+  (let ((a 1)
+        (b 0)
+        (count n))
+    (fib-iter a b count)))
+
+;; Expression created by Version 2.
+(define (fib-2 n)
+  (define fib-iter (lambda (a b count)
+                     (if (= count 0)
+                         b
+                         (fib-iter (+ a b) a (- count 1)))))
+  (fib-iter 1 0 n))
+
+;; using named-let
+(define (fib-3 n)
+  (let fib-iter ((a 1)
+                 (b 0)
+                 (count n))
+    (if (= count 0)
+        b
+        (fib-iter (+ a b) a (- count 1)))))
+
+;; Ex. 4.9
+
+;; iteration construct: while
+;;
+;; (while <predicate> <body>)
+;;
+;; Transformed to derived expression:
+;;
+;; Version 1:
+;;
+;; (if (not <predicate>)
+;;     'false
+;;     (begin <body>
+;;            (while <predicate> <body>)))
+;;
+;;
+;;
+;; Version 2:
+;;
+;; (let while-iter ()
+;;   (if (not <predicate>)
+;;       'false
+;;       (begin <body>
+;;              (while-iter))))
+;;
+;;
+;; Both versions are written in tail-recursive form -- transpose the order of
+;; consequent and alternative to get the non-tail-recursive form.
+;; As should be apparent from above, Version 1 is far from ideal for performance,
+;; as each evaluation produces a full interpretive evaluation. On the other hand,
+;; Version 2 produces a procedure which is simply called recursively.
+;; The disadvantage of Version 2 is that it leaves open the possibility of
+;; name conflicts between 'while-iter and the code within <predicate> and/or <body>.
+;; Assuming that there is a hygienic way to avoid more conflicts with 'while-iter,
+;; the formulation in terms of named-let is likely to be most performant as it does
+;; not repeat the expansion of the while syntax on each iteration.
+;;
+;; Actually, use of named-let is just a convenience for defining and calling
+;; a locally-defined procedure. It is, however, a useful framework for thinking
+;; about iteration constructs. Otherwise, we encounter specifics
+;; (i.e. substitute all the expressions that make up the make-named-let call)
+;; which offer no generalizations.
+;; In essence, the syntactic transformation to a named-let is the proper mental
+;; framework. It also strengthens the importance of named-let as a construct.
+
+
+(define (while? exp) (tagged-list? exp 'while))
+(define (while-predicate exp) (cadr exp))
+(define (while-body exp) (caddr exp))
+(define (make-while predicate-exp body-exp)
+  (list 'while predicate-exp body-exp))
+
+;; Version 1:
+(define (while->if-while exp)
+  (make-if (list 'not (while-predicate exp))
+           'false
+           (make-begin (list
+                        (while-body exp)
+                        exp))))
+
+;; Version 2:
+(define (while->if-while exp)
+  (make-named-let 'while-iter '() (list (make-if (list 'not (while-predicate exp))
+                                                 'false
+                                                 (make-begin (list
+                                                              (while-body exp)
+                                                              (list 'while-iter)))))))
+
+;; An example usage
+(define sum 0)
+(define while-iter (lambda () (if (not (<= sum 7))
+                                  false
+                                  (begin (newline)
+                                         (display sum)
+                                         (set! sum (+ sum 1))
+                                         (while-iter)))))
+
+
+
