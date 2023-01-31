@@ -470,12 +470,17 @@
                         exp))))
 
 ;; Version 2:
-(define (while->if-while exp)
+(define (while->nested-let exp)
   (make-named-let 'while-iter '() (list (make-if (list 'not (while-predicate exp))
                                                  'false
                                                  (make-begin (list
                                                               (while-body exp)
                                                               (list 'while-iter)))))))
+
+;; within eval, prior to application?
+((while? exp)
+ (eval (while->nested-let exp) env))
+
 
 ;; An example usage
 (define sum 0)
