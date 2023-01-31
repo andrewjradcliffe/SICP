@@ -231,6 +231,48 @@
 (define (let->combination exp)
   (cons (make-lambda (let-variables exp) (let-body exp)) (let-exps exp)))
 
+;; bindings must be a list of pairs (or list of lists)
+;; body must be a list
+(define (make-let bindings body)
+  (cons 'let (cons bindings body)))
+
 ;; within eval, prior to application?
 ((let? exp)
  (eval (let->combination exp) env))
+
+
+;; Ex. 4.7
+
+;; (let* ((<var_1> <exp_1>)
+;;        .
+;;        .
+;;        .
+;;        (<var_N> <exp_N>))
+;;   <body>)
+;;
+;; Transformed to derived expression:
+;;
+;; (let ((<var_1> <exp_1>))
+;;   (let ((<var_2> <exp_2>))
+;;     .
+;;     .
+;;     .
+;;     (let ((<var_N> <exp_N>))
+;;       <body>)))
+
+(define (let*? exp) (tagged-list? exp 'let*))
+(define (let*-body exp) (cddr exp))
+(define (let*-bindings exp) (cadr exp))
+
+(define (let*->nested-lets exp)
+  (define (iter bindings)
+    (if (null? (cdr bindings))
+        (make-let (list (car bindings)) (let*-body exp))
+        (make-let (list (car bindings)) (list (iter (cdr bindings))))))
+  (if (null? (let*-bindings exp))
+      (make-let '() (let*-body exp))
+      (iter (let*-bindings exp))))
+
+;; Seemingly, it is sufficient to add a clause to eval.
+((let*? exp)
+ (eval (let*->nested-lets exp) env))
