@@ -532,3 +532,37 @@
                                          (until-iter)))))
 
 (until-iter)
+
+
+;; iteration construct: do
+;; Assuming that `do' is the infinite loop, then it has the form:
+;;
+;; (do <body>)
+;;
+;; Transformed to derived expression:
+;;
+;; (while 'true <body>)
+;;
+;; It is preferable to create the named-let specifically for the do,
+;; rather than use while. This simplifies the code despite the fact that it can be
+
+
+(define (do? exp) (tagged-list? exp 'do))
+(define (do-body exp) (cadr exp))
+(define (make-do body-exp)
+  (list 'do body-exp))
+
+(define (do->while exp)
+  (make-while 'true (do-body exp)))
+
+(define (do->named-let exp)
+  (make-named-let 'do-iter '() (list (make-begin (list (do-body exp)
+                                                       (list 'do-iter))))))
+
+;; An example
+(define sum 0)
+(define do-iter (lambda () (begin (newline)
+                                  (display sum)
+                                  (set! sum (+ sum 1))
+                                  (do-iter))))
+
