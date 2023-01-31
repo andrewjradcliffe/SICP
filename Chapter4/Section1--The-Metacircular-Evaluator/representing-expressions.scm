@@ -273,6 +273,11 @@
       (make-let '() (let*-body exp))
       (iter (let*-bindings exp))))
 
+;; bindings must be a list of pairs (or list of lists)
+;; body must be a list
+(define (make-let* bindings body)
+  (cons 'let* (cons bindings body)))
+
 ;; Seemingly, it is sufficient to add a clause to eval.
 ((let*? exp)
  (eval (let*->nested-lets exp) env))
