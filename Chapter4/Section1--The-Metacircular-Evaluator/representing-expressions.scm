@@ -147,3 +147,43 @@
  (eval (and->if exp) env))
 ((or? exp)
  (eval (or->if exp) env))
+
+
+;; Ex. 4.5
+
+;; (cond ((<predicate> <action_1> ... <action_N>))
+;;       .
+;;       .
+;;       .
+;;       ((<predicate> <action_1> ... <action_N>)))
+;;
+;; New clause syntax: (<test> => <recipient>)
+;; Corresponds to: (if <test> (<recipient> <test>))
+
+(define (cond-=>-clause? clause)
+  (cond ((null? (cond-actions clause)) false)
+        ((eq? (car (cond-actions clause)) '=>) true)
+        (else false)))
+
+(define (cond-recipient clause)
+  (cadr (cond-actions clause)))
+
+(define (cond-=>->exp clause)
+  (list (cond-recipient clause) (cond-predicate clause)))
+
+(define (expand-clauses clauses)
+  (if (null? clauses)
+      'false
+      (let ((first (car clauses))
+            (rest (cdr clauses)))
+        (if (cond-else-clause? first)
+            (if (null? rest)
+                (sequence->exp (cond-actions first))
+                (error "ELSE clause isn't last -- COND->IF" clauses))
+            (if (cond-=>-clause? first)
+                (make-if (cond-predicate first)
+                         (cond-=>->exp first)
+                         (expand-clauses rest))
+                (make-if (cond-predicate first)
+                         (sequence->exp (cond-actions first))
+                         (expand-clauses rest)))))))
