@@ -69,3 +69,81 @@
   'done)
 
 
+;; Ex. 4.4
+;; (and <e_1> ... <e_N>)
+;; (or <e_1> ... <e_N>)
+
+;; As special forms
+
+;; Note that it is necessary to use true? here as the implementation language is
+;; doing the evaluation, but result is a value from the implemented language.
+;; Thus, we need to check whether we consider it to be true from the perspective
+;; of the implementation language.
+
+(define (and? exp) (tagged-list? exp 'and))
+(define (or? exp) (tagged-list? exp 'or))
+
+(define (eval-and exp env)
+  (eval-and-iter (and-exps exp) env))
+(define (and-exps exp) (cdr exp))
+(define (eval-and-iter exps env)
+  (if (null? exps)
+      true
+      (let ((result (eval (car exps) env)))
+        (if (true? result)
+            (if (null? (cdr exps))
+                result
+                (eval-and-iter (cdr exps) env))
+            false))))
+
+(define (eval-or exp env)
+  (eval-or-iter (or-exps exp) env))
+(define (or-exps exp) (cdr exp))
+(define (eval-or-iter exps env)
+  (if (null? exps)
+      false
+      (let ((result (eval (car exps) env)))
+        (if (true? result)
+            result
+            (eval-or-iter (cdr exps) env)))))
+
+;; insert into cond of eval, prior to application?
+((and? exp)
+ (eval-and exp env))
+((or? exp)
+ (eval-or exp env))
+
+
+
+;; As derived expressions
+
+;; Here we do not need to use true? as the derived expression is produced from
+;; special forms (namely, if) which handle the use of true? as needed.
+;; In essence, here we are simply expanding an expression into simpler (but more verbose)
+;; expressions -- special forms -- which utilize procedures such as true? internally.
+;; Conversely, in the special form implementation, we must use true? as we are evaluating
+;; the expression directly.
+;; In other words, implementations of special forms must take care to remember that
+;; the values encountered originate in the implemented language, hence, special purpose
+;; utilities such as true? must be used to test logical values, perform primitive operations, etc.
+
+(define (and->if exp) (and->if-iter (and-exps exp)))
+(define (and->if-iter exps)
+  (if (null? exps)
+      'true
+      (make-if (car exps) (if (null? (cdr exps))
+                              (car exps)
+                              (and-if-iter (cdr exps)))
+               'false)))
+
+(define (or->if exp) (or->if-iter (or-exps exp)))
+(define (or->if-iter exps)
+  (if (null? exps)
+      'false
+      (make-if (car exps) (car exps) (or->if-iter (cdr exps)))))
+
+;; insert into cond of eval, prior to application?
+((and? exp)
+ (eval (and->if exp) env))
+((or? exp)
+ (eval (or->if exp) env))
