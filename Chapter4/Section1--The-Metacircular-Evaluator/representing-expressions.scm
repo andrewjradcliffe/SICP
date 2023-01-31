@@ -493,3 +493,42 @@
 
 
 
+
+;; iteration construct: until
+;;
+;; (until <predicate> <body>)
+;;
+;; Transformed to derived expression:
+;;
+;; (let until-iter ()
+;;   (begin <body>
+;;          (if <predicate>
+;;              'true
+;;              (until-iter))))
+
+(define (until? exp) (tagged-list? exp 'while))
+(define (until-predicate exp) (cadr exp))
+(define (until-body exp) (caddr exp))
+(define (make-until predicate-exp body-exp)
+  (list 'until predicate-exp body-exp))
+
+(define (until->named-let exp)
+  (make-named-let 'until-iter '() (list (make-begin (list (until-body exp)
+                                                          (make-if (until-predicate exp)
+                                                                   'true
+                                                                   (list 'until-iter)))))))
+
+;; within eval, prior to application?
+((until? exp)
+ (eval (until->named-let exp) env))
+
+;; An example usage
+(define sum 0)
+(define until-iter (lambda () (begin (newline)
+                                     (display sum)
+                                     (set! sum (+ sum 1))
+                                     (if (<= sum 7)
+                                         true
+                                         (until-iter)))))
+
+(until-iter)
