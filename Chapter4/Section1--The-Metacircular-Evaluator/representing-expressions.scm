@@ -281,3 +281,91 @@
 ;; Seemingly, it is sufficient to add a clause to eval.
 ((let*? exp)
  (eval (let*->nested-lets exp) env))
+
+
+;; Ex. 4.8
+
+;; (let <var> <bindings> <body>)
+;;
+;; Transformed to derived expression:
+;;
+;; Version 1:
+;;
+;; (begin (define <var> (lambda (<bound-parameters>) <body>))
+;;        (let <bindings>
+;;          (<var> <bound-parameters>)))
+;;
+;;
+;; Version 2:
+;;
+;; (begin (define <var> (lambda (<bound-parameters>) <body>))
+;;        (<var> <bound-values>))
+;;
+;;
+;; On first glance, it may appear that Version 1 is necessary in case
+;; there are any weird uses of mutation involving the bound parameters.
+;; However, in the procedure call, all values would be bound in a fresh environment,
+;; so any use of those symbols would be resolved from that environment, not the environment
+;; created by the let. In essence, Version 1 would bind the same values twice --
+;; first in the let lambda, then again in the procedure call that occurs in the body of
+;; said lambda.
+;; The creation of the second environment appears to be superfluous, as any mutating
+;; changes would be confined to the environment created by the procedure itself, i.e.
+;; the third environment. Hence, we can simplify to Version 2 without loss of generality.
+;; Below, both named-let->sequence versions are provided.
+
+(define (named-let? exp)
+  (if (let? exp)
+      (variable? (cadr exp))
+      false))
+(define (named-let-var exp) (cadr exp))
+(define (named-let-body exp) (cdddr exp))
+(define (named-let-bindings exp) (caddr exp))
+(define (named-let-variables exp)
+  (define (iter bindings)
+    (if (null? bindings)
+        '()
+        (cons (caar bindings)
+              (iter (cdr bindings)))))
+  (iter (named-let-bindings exp)))
+(define (named-let-exps exp)
+  (define (iter bindings)
+    (if (null? bindings)
+        '()
+        (cons (cdar bindings) ;; (cadar bindings) if each binding is list instead of pair
+              (iter (cdr bindings)))))
+  (iter (named-let-bindings exp)))
+
+
+(define (make-named-let var bindings body)
+  (cons 'let (cons var (cons bindings body))))
+
+(define (make-define var value)
+  (list 'define var value))
+(define (make-define-procedure var parameters body)
+  (cons 'define (cons (cons var parameters) body)))
+
+;; Version 1:
+(define (named-let->sequence exp)
+  (list (make-define (named-let-var exp)
+                     (make-lambda (named-let-variables exp)
+                                  (named-let-body exp)))
+        (make-let (named-let-bindings exp)
+                  (list (cons (named-let-var exp)
+                              (named-let-variables exp))))))
+
+;; Version 2:
+(define (named-let->sequence exp)
+  (list (make-define (named-let-var exp)
+                     (make-lambda (named-let-variables exp)
+                                  (named-let-body exp)))
+        (cons (named-let-var exp)
+              (named-let-exps exp))))
+
+;; Thus, one could handle this by simply changing:
+(define (let->combination exp)
+  (if (named-let? exp) ;; or (variable? (cadr exp))
+      (make-begin (named-let->sequence exp))
+      (cons (make-lambda (let-variables exp)
+                         (let-body exp))
+            (let-exps exp))))
