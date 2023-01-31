@@ -545,6 +545,11 @@
 ;;
 ;; It is preferable to create the named-let specifically for the do,
 ;; rather than use while. This simplifies the code despite the fact that it can be
+;; expressed using while.
+;;
+;; (let do-iter '()
+;;   (begin <body>
+;;          (do-iter)))
 
 
 (define (do? exp) (tagged-list? exp 'do))
@@ -566,3 +571,9 @@
                                   (set! sum (+ sum 1))
                                   (do-iter))))
 
+;; iteration construct: for
+;;
+;; (for (<var_LB> <exp_LB>) (<var_UB> <exp_UB>) <next> <cmp> <body>)
+;;
+;; Transformed to derived expression:
+;;
