@@ -187,3 +187,50 @@
                 (make-if (cond-predicate first)
                          (sequence->exp (cond-actions first))
                          (expand-clauses rest)))))))
+
+
+;; Ex. 4.6
+
+;; (let ((<var_1> <exp_1>)
+;;       .
+;;       .
+;;       .
+;;       (<var_N> <exp_N>))
+;;   <body>)
+;;
+;; Transformed to derived expression:
+;;
+;; ((lambda (<var_1> ... <var_N>) <body>)
+;;  <exp_1>
+;;  .
+;;  .
+;;  .
+;;  <exp_N>)
+
+
+(define (let? exp) (tagged-list? exp 'let))
+(define (let-body exp) (cddr exp))
+(define (let-bindings exp) (cadr exp))
+
+(define (let-variables exp)
+  (define (iter bindings)
+    (if (null? bindings)
+        '()
+        (cons (caar bindings)
+              (iter (cdr bindings)))))
+  (iter (let-bindings exp)))
+
+(define (let-exps exp)
+  (define (iter bindings)
+    (if (null? bindings)
+        '()
+        (cons (cdar bindings) ;; (cadar bindings) if each binding is list instead of pair
+              (iter (cdr bindings)))))
+  (iter (let-bindings exp)))
+
+(define (let->combination exp)
+  (cons (make-lambda (let-variables exp) (let-body exp)) (let-exps exp)))
+
+;; within eval, prior to application?
+((let? exp)
+ (eval (let->combination exp) env))
