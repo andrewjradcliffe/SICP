@@ -665,3 +665,44 @@
              (for-iter (+ i 1) n))))
 
 
+
+;; iteration construct: repeat
+;;
+;; (repeat <n> <body>)
+;;
+;; Transformed to derived expression:
+;;
+;; (for (i-iter 0) (m-iter <n>) (+ i-iter 1) (< i-iter m-iter) <body>)
+
+(define (repeat? exp) (tagged-list? exp 'repeat))
+(define (repeat-n exp) (cadr exp))
+(define (repeat-body exp) (caddr exp))
+(define (make-repeat n-exp body-exp)
+  (list 'repeat n-exp body-exp))
+
+(define (repeat->for exp)
+  (make-for (cons 'i-iter 0)
+            (cons 'm-iter (repeat-n exp))
+            (list + 'i-iter 1)
+            (list < 'i-iter 'm-iter)
+            (repeat-body exp)))
+
+;; within eval:
+((repeat? exp)
+ (eval (repeat->for exp) env))
+
+;; An example
+(define i 1)
+(repeat 5 (begin (newline)
+                 (display (/ 1 i))
+                 (set! i (+ i 1))))
+
+;; Translation from derived expression
+(let for-iter ((i-iter 0)
+               (m-iter 5))
+  (if (not (< i-iter m-iter))
+      false
+      (begin (newline)
+             (display (/ 1 i))
+             (set! i (+ i 1))
+             (for-iter (+ i-iter 1) m-iter))))
