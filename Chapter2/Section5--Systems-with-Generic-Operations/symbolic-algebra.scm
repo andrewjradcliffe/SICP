@@ -165,3 +165,38 @@
       (gcd-terms b (pseudoremainder-terms a b))))
 
 ;; Ex 2.97
+
+;; a
+
+(define (reduce-terms n d)
+  (let ((g (gcd-terms n d)))
+    (o1 (max (order (first-term n)) (order (first-term d))))
+    (let ((factor (expt (coeff (first-term g)) (+ 1 (- o1 (order (first-term g)))))))
+      (let ((new-n (mul-term-by-all-terms (make-term 0 factor) n))
+            (new-d (mul-term-by-all-terms (make-term 0 factor) d)))
+        (let ((n-div-g (car (div-terms new-n g)))
+              (d-div-g (car (div-terms new-d g))))
+          (let ((i-g (gcd (integer-gcd n-div-g) (integer-gcd d-div-g))))
+            (list (mul-term-by-all-terms (make-term 0 (/ 1 i-g)) n-div-g)
+                  (mul-term-by-all-terms (make-term 0 (/ 1 i-g)) d-div-g))))))))
+
+(define (reduce-poly p1 p2)
+  (if (same-variable? (variable p1) (variable p2))
+      (let ((term-lists (reduce-terms (termlist p1) (termlist p2)))
+            (var (variable p1)))
+        (list (make-poly var (car term-lists)) (make-poly var (cadr term-lists))))
+      (error "Polys not in same var -- REDUCE-POLY (list p1 p2)")))
+
+
+;; b
+
+(define (reduce n d) (apply-generic 'reduce n d))
+
+;; within install-polynomial-package
+(put 'reduce '(polynomial polynomial) reduce-poly)
+
+;; within install-rational-package
+(put 'reduce '(integer integer) reduce-integer)
+(define (make-rat n d)
+  (let ((n-d (reduce n d)))
+    (cons (car n-d) (cadr n-d))))
