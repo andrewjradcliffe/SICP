@@ -484,6 +484,10 @@
 
 ;; An example usage
 (define sum 0)
+(while (<= sum 7) (begin (newline)
+                         (display sum)
+                         (set! sum (+ sum 1))))
+
 ;; What it translates to:
 (define while-iter (lambda () (if (not (<= sum 7))
                                   false
@@ -533,6 +537,10 @@
 
 ;; An example usage
 (define sum 0)
+(until (<= sum 7) (begin (newline)
+                         (display sum)
+                         (set! sum (+ sum 1))))
+
 ;; What it translates to:
 (define until-iter (lambda () (begin (newline)
                                      (display sum)
@@ -583,6 +591,10 @@
 
 ;; An example
 (define sum 0)
+(do (begin (newline)
+           (display sum)
+           (set! sum (+ sum 1))))
+
 ;; What it translates to:
 (define do-iter (lambda () (begin (newline)
                                   (display sum)
@@ -641,6 +653,9 @@
 
 
 ;; An example
+(for (i 0) (n 7) (+ i 1) (<= i n) (begin (newline)
+                                         (display (* i n))))
+
 (let for-iter ((i 0)
                (n 7))
   (if (not (<= i n))
@@ -648,3 +663,5 @@
       (begin (newline)
              (display (* i n))
              (for-iter (+ i 1) n))))
+
+
