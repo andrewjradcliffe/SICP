@@ -706,3 +706,58 @@
              (display (/ 1 i))
              (set! i (+ i 1))
              (for-iter (+ i-iter 1) m-iter))))
+
+
+;; Ex. 4.10
+;;
+#|
+A simple way to achieve this is to use the result of Ex. 4.3 and add
+procedures to the method table for eval. Thus, we could add let, let*, named-let
+and all the iteration constructs.
+e.g.
+(define (eval-let exp env)
+    (if (named-let exp)
+        (eval (make-begin (named-let->sequence exp)) env)
+        (eval (let->combination exp) env)))
+
+(put 'eval 'let eval-let)
+|#
+
+#|
+An alternative approach is to use a modification such as that demonstrated in Ex. 4.5,
+which adds syntax to a derived expression. This is likely the intention of the exercise.
+In fact, named-let is the same type of modification -- new syntax around a
+a derived expression.
+
+For example, we could add the iteration constructs by modifying the handling of named-let.
+e.g.
+
+(let while <predicate> <body>)
+
+Transformed to derived expression
+
+(let while-iter ()
+    (if (not <predicate>)
+        false
+    (begin <body>
+        (while-iter))))
+
+This transformation could be enacted within named-let->sequence, though, one must admit,
+it becomes rather messy.
+
+(define (let-while? exp)
+  (if (let? exp)
+      (eq? (cadr exp) 'while)
+      false))
+
+(define (named-let->sequence exp)
+  (if (let-while? exp)
+      (list (while->if-while exp)
+            (list ;; regular body as on p. 119
+             ))))
+
+Clearly, quite a jumbled mess!
+
+Conclusion: a, b (but in particular b) seem to satisfy the exercise's objective.
+
+|#
