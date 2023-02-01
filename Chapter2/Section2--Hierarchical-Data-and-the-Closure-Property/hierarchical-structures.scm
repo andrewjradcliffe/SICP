@@ -82,6 +82,63 @@
 
 ;; Ex. 2.29
 
+(define (make-mobile left right)
+  (list left right))
+
+;; length must be a number
+;; structure must be either a number or another mobile
+(define (make-branch length structure)
+  (list length structure))
+
+;; a
+
+;; z : mobile
+;; x or y : left or right branch, respectively
+(define (left-branch z) (car z))
+(define (right-branch z) (cadr z))
+
+(define (branch-length x) (car x))
+(define (branch-structure x) (cadr x))
+
+;; b
+
+(define (total-weight z)
+  (let ((x (left-branch z))
+        (y (right-branch z)))
+    (+ (total-weight-branch x) (total-weight-branch y))))
+
+(define (total-weight-branch x)
+  (if (pair? (branch-structure x))
+      (total-weight x)
+      (branch-structure x)))
+
+;; c
+
+(define (balanced-binary? z)
+  (= (branch-torque (left-branch z))
+     (branch-torque (right-branch z))))
+
+(define (branch-torque x)
+  (* (branch-length x) (total-weight-branch x)))
+
+;; d
+
+;; If cons instead of list, simply remove the car from right-branch and branch-structure
+
+(define (balanced-branch? x)
+  (let ((z (branch-structure x)))
+    (if (pair? z)
+        (and (balanced-binary? z)
+             (balanced-branch? (left-branch z))
+             (balanced-branch? (right-branch z)))
+        true)))
+
+(define (balanced? z)
+  (and (balanced-binary? z)
+       (balanced-branch? (left-branch z))
+       (balanced-branch? (right-branch z))))
+
+
 ;; Ex. 2.30
 
 (define (square-tree t)
@@ -117,3 +174,14 @@
 
 (define (square-tree tree) (tree-map (lambda (x) (* x x)) tree))
 (define (scale-tree tree) (tree-map (lambda (x) (* x factor)) tree))
+
+;; Ex. 2.32
+
+(define (subsets s)
+  (if (null? s)
+      (list '())
+      (let ((rest (subsets (cdr s))))
+        (append rest (map (lambda (x)
+                            (cond ((null? x) (list (car s)))
+                                  ((null? (cdr x)) (list (car s) (car x)))
+                                  (else (cons (car s) x)))) rest)))))
