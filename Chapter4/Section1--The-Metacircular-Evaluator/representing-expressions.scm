@@ -484,13 +484,22 @@
 
 ;; An example usage
 (define sum 0)
+;; What it translates to:
 (define while-iter (lambda () (if (not (<= sum 7))
                                   false
                                   (begin (newline)
                                          (display sum)
                                          (set! sum (+ sum 1))
                                          (while-iter)))))
-
+(while-iter)
+;; Using named-let
+(let while-iter ()
+  (if (not (<= sum 7))
+      false
+      (begin (newline)
+             (display sum)
+             (set! sum (+ sum 1))
+             (while-iter))))
 
 
 
@@ -524,14 +533,22 @@
 
 ;; An example usage
 (define sum 0)
+;; What it translates to:
 (define until-iter (lambda () (begin (newline)
                                      (display sum)
                                      (set! sum (+ sum 1))
                                      (if (<= sum 7)
                                          true
                                          (until-iter)))))
-
 (until-iter)
+;; Using named-let
+(let until-iter ()
+  (begin (newline)
+         (display sum)
+         (set! sum (+ sum 1))
+         (if (<= sum 7)
+             true
+             (until-iter))))
 
 
 ;; iteration construct: do
@@ -566,10 +583,19 @@
 
 ;; An example
 (define sum 0)
+;; What it translates to:
 (define do-iter (lambda () (begin (newline)
                                   (display sum)
                                   (set! sum (+ sum 1))
                                   (do-iter))))
+;; Using named-let
+(let do-iter ()
+  (begin (newline)
+         (display sum)
+         (set! sum (+ sum 1))
+         (do-iter)))
+
+
 
 ;; iteration construct: for
 ;;
@@ -577,3 +603,48 @@
 ;;
 ;; Transformed to derived expression:
 ;;
+;; (let for-iter ((<var_LB> <exp_LB>)
+;;                (<var_UB> <exp_UB>))
+;;   (if (not <cmp>)
+;;       'false
+;;       (begin <body>
+;;              (for-iter <next> <var_UB>))))
+
+(define (for? exp) (tagged-list? exp 'for))
+(define (for-lb exp) (cadr exp))
+(define (for-ub exp) (caddr exp))
+(define (for-lb-var exp) (car (for-lb exp)))
+(define (for-ub-var exp) (car (for-ub exp)))
+(define (for-next exp) (cadddr exp))
+(define (for-cmp exp) (caddddr exp))
+(define (for-body exp) (cadddddr exp))
+
+(define (caddddr x) (car (cddddr x)))
+(define (cdddddr x) (cdr (cddddr x)))
+(define (cadddddr x) (car (cdddddr x)))
+
+(define (make-for lb ub next cmp body)
+  (list 'for lb ub next cmp body))
+
+(define (for->named-let exp)
+  (make-named-let 'for-iter (list (for-lb exp) (for-ub exp))
+                  (list (make-if (list 'not (for-cmp exp))
+                                 'false
+                                 (make-begin
+                                  (list (for-body exp)
+                                        (list 'for-iter (for-next exp) (for-ub-var exp))))))))
+
+
+;; within eval, prior to application?
+((for? exp)
+ (eval (for->named-let exp) env))
+
+
+;; An example
+(let for-iter ((i 0)
+               (n 7))
+  (if (not (<= i n))
+      false
+      (begin (newline)
+             (display (* i n))
+             (for-iter (+ i 1) n))))
