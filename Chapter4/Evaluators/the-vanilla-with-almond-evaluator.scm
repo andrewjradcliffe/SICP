@@ -27,6 +27,22 @@ Vanilla with almond is excellent, and maintains the minimalist philosophy.
          (eval (or->if exp) env))
         ((let? exp)
          (eval (let->combination exp) env))
+        ((let*? exp)
+         (eval (let*->nested-lets exp) env))
+        ;; Iteration constructs
+        ((while? exp)
+         (eval (while->nested-let exp) env))
+        ((until? exp)
+         (eval (until->named-let exp) env))
+        ((do? exp)
+         (eval (do->named-let exp) env))
+        ((for? exp)
+         (eval (for->named-let exp) env))
+        ((repeat? exp)
+         (eval (repeat->for exp) env))
+        ;; Better handling of not than using implementation language primitive
+        ((not? exp)
+         (eval (not->if exp) env))
         ;;;;;;;;;;;;;;;; end of extra syntax
         ((application? exp)
          (apply (eval (operator exp) env)
@@ -133,3 +149,152 @@ Vanilla with almond is excellent, and maintains the minimalist philosophy.
 
 (define (make-let* bindings body)
   (cons 'let* (cons bindings body)))
+
+
+;; Ex. 4.8
+
+(define (named-let? exp)
+  (if (let? exp)
+      (variable? (cadr exp))
+      false))
+(define (named-let-var exp) (cadr exp))
+(define (named-let-body exp) (cdddr exp))
+(define (named-let-bindings exp) (caddr exp))
+(define (named-let-variables exp)
+  (define (iter bindings)
+    (if (null? bindings)
+        '()
+        (cons (caar bindings)
+              (iter (cdr bindings)))))
+  (iter (named-let-bindings exp)))
+(define (named-let-exps exp)
+  (define (iter bindings)
+    (if (null? bindings)
+        '()
+        (cons (cadar bindings) ;; (cdar bindings) if each binding is pair instead of list
+              (iter (cdr bindings)))))
+  (iter (named-let-bindings exp)))
+
+
+(define (make-named-let var bindings body)
+  (cons 'let (cons var (cons bindings body))))
+
+(define (make-define var value)
+  (list 'define var value))
+(define (make-define-procedure var parameters body)
+  (cons 'define (cons (cons var parameters) body)))
+
+(define (named-let->sequence exp)
+  (list (make-define (named-let-var exp)
+                     (make-lambda (named-let-variables exp)
+                                  (named-let-body exp)))
+        (cons (named-let-var exp)
+              (named-let-exps exp))))
+
+;; Thus, one could handle this by simply changing:
+(define (let->combination exp)
+  (if (named-let? exp) ;; or (variable? (cadr exp))
+      (make-begin (named-let->sequence exp))
+      (cons (make-lambda (let-variables exp)
+                         (let-body exp))
+            (let-exps exp))))
+
+;; test of named-let
+(define (fib n)
+  (let fib-iter ((a 1)
+                 (b 0)
+                 (count n))
+    (if (= count 0)
+        b
+        (fib-iter (+ a b) a (- count 1)))))
+
+
+;; Ex. 4.9
+
+;; Without a hygienic macro system, these may have name conflicts! Beware!
+
+(define (while? exp) (tagged-list? exp 'while))
+(define (while-predicate exp) (cadr exp))
+(define (while-body exp) (caddr exp))
+(define (make-while predicate-exp body-exp)
+  (list 'while predicate-exp body-exp))
+
+
+(define (while->nested-let exp)
+  (make-named-let 'while-iter '() (list (make-if (list 'not (while-predicate exp))
+                                                 'false
+                                                 (make-begin (list
+                                                              (while-body exp)
+                                                              (list 'while-iter)))))))
+
+(define (until? exp) (tagged-list? exp 'while))
+(define (until-predicate exp) (cadr exp))
+(define (until-body exp) (caddr exp))
+(define (make-until predicate-exp body-exp)
+  (list 'until predicate-exp body-exp))
+
+(define (until->named-let exp)
+  (make-named-let 'until-iter '() (list (make-begin (list (until-body exp)
+                                                          (make-if (until-predicate exp)
+                                                                   'true
+                                                                   (list 'until-iter)))))))
+
+
+;; The infinite loop version
+(define (do? exp) (tagged-list? exp 'do))
+(define (do-body exp) (cadr exp))
+(define (make-do body-exp)
+  (list 'do body-exp))
+
+(define (do->while exp)
+  (make-while 'true (do-body exp)))
+
+(define (do->named-let exp)
+  (make-named-let 'do-iter '() (list (make-begin (list (do-body exp)
+                                                       (list 'do-iter))))))
+
+
+(define (for? exp) (tagged-list? exp 'for))
+(define (for-lb exp) (cadr exp))
+(define (for-ub exp) (caddr exp))
+(define (for-lb-var exp) (car (for-lb exp)))
+(define (for-ub-var exp) (car (for-ub exp)))
+(define (for-next exp) (cadddr exp))
+(define (for-cmp exp) (caddddr exp))
+(define (for-body exp) (cadddddr exp))
+
+(define (caddddr x) (car (cddddr x)))
+(define (cdddddr x) (cdr (cddddr x)))
+(define (cadddddr x) (car (cdddddr x)))
+
+(define (make-for lb ub next cmp body)
+  (list 'for lb ub next cmp body))
+
+(define (for->named-let exp)
+  (make-named-let 'for-iter (list (for-lb exp) (for-ub exp))
+                  (list (make-if (list 'not (for-cmp exp))
+                                 'false
+                                 (make-begin
+                                  (list (for-body exp)
+                                        (list 'for-iter (for-next exp) (for-ub-var exp))))))))
+
+
+(define (repeat? exp) (tagged-list? exp 'repeat))
+(define (repeat-n exp) (cadr exp))
+(define (repeat-body exp) (caddr exp))
+(define (make-repeat n-exp body-exp)
+  (list 'repeat n-exp body-exp))
+
+(define (repeat->for exp)
+  (make-for (cons 'i-iter 0)
+            (cons 'm-iter (repeat-n exp))
+            (list + 'i-iter 1)
+            (list < 'i-iter 'm-iter)
+            (repeat-body exp)))
+
+;; Better handling of not
+
+(define (not? exp) (tagged-list? exp 'not))
+(define (not-arg exp) (cadr exp))
+(define (not->if exp)
+  (make-if (not-arg exp) 'false 'true))
