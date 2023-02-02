@@ -224,7 +224,7 @@
   (define (iter bindings)
     (if (null? bindings)
         '()
-        (cons (cdar bindings) ;; (cadar bindings) if each binding is list instead of pair
+        (cons (cadar bindings) ;; (cdar bindings) if each binding is pair instead of list
               (iter (cdr bindings)))))
   (iter (let-bindings exp)))
 
@@ -332,7 +332,7 @@
   (define (iter bindings)
     (if (null? bindings)
         '()
-        (cons (cdar bindings) ;; (cadar bindings) if each binding is list instead of pair
+        (cons (cadar bindings) ;; (cdar bindings) if each binding is pair instead of list
               (iter (cdr bindings)))))
   (iter (named-let-bindings exp)))
 
