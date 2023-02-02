@@ -505,6 +505,15 @@
              (set! sum (+ sum 1))
              (while-iter))))
 
+;; Definition using hygienic macro system
+(define-syntax while
+  (syntax-rules ()
+    ((while predicate body)
+     (let while-iter ()
+       (if (not predicate)
+           false
+           (begin body
+                  (while-iter)))))))
 
 
 ;; iteration construct: until
@@ -558,6 +567,15 @@
              true
              (until-iter))))
 
+;; Definition using hygienic macro system
+(define-syntax until
+  (syntax-rules ()
+    ((until predicate body)
+     (let until-iter ()
+       (begin body
+              (if predicate
+                  true
+                  (until-iter)))))))
 
 ;; iteration construct: do
 ;; Assuming that `do' is the infinite loop, then it has the form:
@@ -665,6 +683,17 @@
              (for-iter (+ i 1) n))))
 
 
+;; Definition using hygienic macro system
+(define-syntax for
+  (syntax-rules ()
+    ((for (var_LB exp_LB) (var_UB exp_UB) next cmp body)
+     (let for-iter ((var_LB exp_LB)
+                    (var_UB exp_UB))
+       (if (not cmp)
+           false
+           (begin body
+                  (for-iter next var_UB)))))))
+
 
 ;; iteration construct: repeat
 ;;
@@ -706,6 +735,12 @@
              (display (/ 1 i))
              (set! i (+ i 1))
              (for-iter (+ i-iter 1) m-iter))))
+
+;; Definition using hygienic macro system
+(define-syntax repeat
+  (syntax-rules ()
+    ((repeat n body)
+     (for (i-iter 0) (m-iter n) (+ i-iter 1) (< i-iter m-iter) body))))
 
 
 ;; Ex. 4.10
