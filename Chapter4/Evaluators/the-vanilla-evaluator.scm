@@ -271,6 +271,14 @@ this subtle spice.
         (list '- -)
         (list '* *)
         (list '/ /)
+        (list '= =)
+        (list '<= <=)
+        (list '>= >=)
+        (list '> >)
+        (list '< <)
+        ;; (list 'not not) ;; this one is a bit sketchy
+        (list 'newline newline)
+        (list 'display display)
         ;; more primitives
         ))
 
@@ -325,3 +333,8 @@ this subtle spice.
             (append (cdr x) y))))
 
 (append '(a b c) '(d e f))
+
+(define (factorial n)
+  (if (= n 1)
+      1
+      (* (factorial (- n 1)) n)))
