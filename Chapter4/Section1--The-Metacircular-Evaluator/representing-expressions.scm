@@ -133,7 +133,7 @@
       'true
       (make-if (car exps) (if (null? (cdr exps))
                               (car exps)
-                              (and-if-iter (cdr exps)))
+                              (and->if-iter (cdr exps)))
                'false)))
 
 (define (or->if exp) (or->if-iter (or-exps exp)))
