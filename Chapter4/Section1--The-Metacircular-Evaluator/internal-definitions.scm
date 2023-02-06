@@ -429,3 +429,232 @@ But do we really wish for such a cage, all for the sake of "true" simultaneity?
 
 |#
 
+
+
+;; Ex. 4.20
+
+#|
+
+ (letrec ((<var1> <exp1>) ... (<varN> <expN>))
+   <body>)
+
+Transformation to form in text
+
+ (let ((<var1> '*unassigned*) ... (<varN> '*unassigned*))
+   (set! <var1> <exp1>)
+   .
+   .
+   .
+   (set! <varN> <expN>)
+   <body>)
+
+
+Transformation to form in Ex. 4.18
+
+ (let ((<var1> '*unassigned*) ... (<varN> '*unassigned*))
+   (let ((<hvar1> <exp1>) ... (<hvarN> <expN>))
+     (set! <var1> <hvar1>)
+     .
+     .
+     .
+     (set! <varN> <hvarN>))
+   <body>)
+
+|#
+
+;; a
+
+(define (letrec? exp) (tagged-list? exp 'letrec))
+(define (letrec-bindings exp) (cadr exp))
+(define (letrec-body exp) (cddr exp))
+
+(define (letrec-variables exp)
+  (define (iter bindings)
+    (if (null? bindings)
+        '()
+        (cons (caar bindings)
+              (iter (cdr bindings)))))
+  (iter (letrec-bindings exp)))
+;; Or, more tersely:
+(define (letrec-variables exp) (map car (letrec-bindings exp)))
+
+(define (letrec-exps exp)
+  (define (iter bindings)
+    (if (null? bindings)
+        '()
+        (cons (cadar bindings)
+              (iter (cdr bindings)))))
+  (iter (letrec-bindings exp)))
+;; Or, more tersely:
+(define (letrec-exps exp) (map cadr (letrec-bindings exp)))
+
+;; Syntax transformation to form in text
+(define (letrec->let exp)
+  (let ((vars (letrec-variables exp)))
+    (make-let (map (lambda (var) (list var '*unassigned*)) vars)
+              (append (map (lambda (var exp) (list 'set! var exp)) vars (letrec-exps exp))
+                      (letrec-body exp)))))
+
+;; Syntax transformation to form in Ex. 4.18
+(define (letrec->let exp)
+  (let ((vars (letrec-variables exp)))
+    (let ((hvars (map (lambda (var) (join-symbol 'h var)) vars)))
+      (make-let (map (lambda (var) (list var '*unassigned*)) vars)
+                (cons (make-let (map (lambda (hvar exp) (list hvar exp)) hvars (letrec-exps exp))
+                                (map (lambda (var hvar) (list 'set! var hvar)) vars hvars))
+                      (letrec-body exp))))))
+
+;; within eval:
+((letrec? exp)
+ (eval (letrec->let exp) env))
+
+
+
+;; b
+
+#|
+We can assume that we implement simultaneous scope as in the text. This yields:
+
+ (define (f x)
+   (letrec ((even? (lambda ...))
+            (odd? (lambda ...)))
+     <rest-of-body-of-f>))
+
+Which transforms to:
+
+ (define (f x)
+   (let ((even? '*unassigned*)
+         (odd? '*unassigned*))
+     (set! even? (lambda ...))
+     (set! odd? (lambda ...))
+     <rest-of-body-of-f>))
+
+Which, after we expand the let, transforms to:
+
+ (define (f x)
+   ((lambda (even? odd?)
+      (set! even? (lambda ...))
+      (set! odd? (lambda ...))
+      <rest-of-body-of-f>)
+    '*unassigned*
+    '*unassigned*))
+
+
+Calling f on 5 creates the environment below.
+
+
+                                    ^
+                                    |
+                                    |
+                        +------------------+
+                        | x : 5            |
+                        |                  |
+    env-of-f  --------->|                  |
+                        |                  |
+                        |                  |
+                        +------------------+
+
+
+Then, we generate the (lambda) procedure and call it on the '*unassigned*s,
+creating this environment:
+
+                                 env-of-f
+                                    ^
+                                    |
+                                    |
+                        +-----------------------+
+                        | even? : '*unassigned* |
+                        | odd? : '*unassigned*  |
+    extended-env ------>|                       |
+                        |                       |
+                        |                       |
+                        +-----------------------+
+
+
+We proceed to evaluate the body of the procedure within extended-env.
+The first expression creates a procedure, the environment part of which is extended-env,
+and binds it to even?.
+The second expression creates a procedure, the environment part of which is extended-env,
+and binds it to odd?.
+Then, the rest of the body of f is evaluated.
+
+Thus, when even? or odd? is called within <rest-of-body-of-f>, the respective internal
+call to odd? or even? can be resolved as their environment part is extended-env,
+which contains procedures bound to the variables.
+
+                                 extended-env
+                                    ^
+                                    |
+                                    |
+                        +------------------+
+                        | n : some value   |
+                        |                  |
+ created by even? ----->|                  |
+        or odd?         |                  |
+                        |                  |
+                        +------------------+
+
+|#
+
+#|
+
+Louis' suggestion corresponds to
+
+ (define (f x)
+   (let ((even? (lambda ...))
+         (odd? (lambda ...)))
+     <rest-of-body-of-f>))
+
+Which, after we expand the let, transforms to:
+
+ (define (f x)
+   ((lambda (even? odd?) <rest-of-body-of-f>)
+    (lambda ...)
+    (lambda ...)))
+
+
+The (lambda ...)'s for even?, odd? are evaluated in the environment of f, hence,
+they have as their environment part the env-of-f.
+
+
+The evaluation of the lambda and its call on the two procedure objects
+produces extended-env.
+
+                                 env-of-f
+                                    ^
+                                    |
+                                    |
+                        +-----------------------+
+                        | even? : proc          |
+                        | odd? : proc           |
+    extended-env ------>|                       |
+                        |                       |
+                        |                       |
+                        +-----------------------+
+
+
+Then, the <rest-of-body-of-f> is evaluated.
+When even? or odd? is called with n != 0, the variable odd? or even? will need
+to be looked up. However, the environment part of the procedure will be env-of-f,
+hence:
+
+                                 env-of-f
+                                    ^
+                                    |
+                                    |
+                        +------------------+
+                        | n : some value   |
+                        |                  |
+ created by even? ----->|                  |
+        or odd?         |                  |
+                        |                  |
+                        +------------------+
+
+The variable lookup will fail in this case, as even? and odd? are not bound
+in the environment of f.
+
+On the other hand, with letrec, the call environment is extended-env, and the enclosing
+environment of the frame created by calling even? will be extended-env, and extended-env
+has even? and odd? bound (to the correct procedures).
+
+|#
