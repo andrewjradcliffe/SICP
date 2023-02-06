@@ -222,3 +222,7 @@ to the variables (which are no longer in use) is essentially harmless.
                (set-car! frame rest-vars)
                (set-cdr! frame rest-vals)))
             (else (scan vars vals))))))
+
+;; within eval, prior to application?
+((make-unbound!? exp)
+ (eval-unbind exp env))
