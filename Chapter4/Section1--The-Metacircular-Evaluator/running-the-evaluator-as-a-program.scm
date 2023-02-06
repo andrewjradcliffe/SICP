@@ -22,3 +22,31 @@ or, if only two args, then the list to which proc will be applied.
 The former will assuredly fail catastrophically, and the latter will also
 fail, but perhaps less catastrophically.
 |#
+
+;; Further elaboration on 4.14
+#|
+Given Louis' installation of map as a primitive from the implementation
+language, consider:
+
+(define (square x) (* x x))
+(map square '(1 2 3))    ; <---- recognized as application
+
+map itself will be recognized as a primitive procedure inside apply, hence,
+apply-primitive-procedure will be called on the 2-element list produced by calling
+eval on the 2-element list of 'square and '(1 2 3).
+In the implementation language, this results in (map proc seq)
+                                                      ^    ^
+                                                      |    |
+                                                      |   3-element list ( '(1 2 3) )
+                                                 4-element list (the procedure object)
+
+Inside the body of map in the implementation language, the first call is (null? seq),
+which, because we are sharing list representation between the implementation and implemented
+language, happens to not fail. Next we have (proc (car seq)). (car seq) happens to
+not fail for the same reason as null?. However, when proc is called, failure is guaranteed.
+In essence, in the implementation language, we are attempting to call a 4-element list
+on a value. But the implementation language does not recognize lists as procedures
+(not does it know how to apply them).
+
+See p. 131 for illustrations.
+|#
