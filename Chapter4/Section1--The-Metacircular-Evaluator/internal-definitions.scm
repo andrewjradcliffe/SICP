@@ -109,3 +109,19 @@
                       rest))
               (iter bindings set!-exps (append body-exps (list first)) rest)))))
   (iter '() '() '() exps))
+
+
+;; c
+
+;; If in make-procedure:
+(define (make-procedure parameters body env)
+  (list 'procedure parameters (scan-out-defines body) env))
+
+;; If in procedure-body:
+(define (procedure-body p) (scan-out-defines (caddr p)))
+
+;; From an efficiency perspective, placing this in make-procedure is preferable,
+;; as the defines are scanned out a single time -- when the procedure is created.
+;; On the other hand, if placed in procedure-body, each time the procedure is
+;; applied, the defines will be scanned out. Clearly, the latter is far less efficient.
+
