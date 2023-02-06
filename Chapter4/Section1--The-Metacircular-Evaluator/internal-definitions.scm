@@ -273,3 +273,159 @@ Thus, this is not guaranteed to work when internally-defined variables use any o
 variables' values.
 
 |#
+
+
+
+;; Ex. 4.18
+
+;; (lambda <vars>
+;;   (let ((u '*unassigned*)
+;;         (v '*unassigned*))
+;;     (let ((a <e1>)
+;;           (b <e2>))
+;;       (set! u a)
+;;       (set! v b))
+;;     <e3))
+
+#|
+In addition to creating the same two environments (extended-env and extra-env)
+as the version in the text, the inner let creates a third environment:
+
+
+
+                                 extra-env
+                                    ^
+                                    |
+                                    |
+                        +------------------+
+                        | a: result of <e1>|
+                        | b: result of <e2>|
+   inner-env  --------->|                  |
+                        |                  |
+                        |                  |
+                        +------------------+
+
+<e1>, <e2> are evaluated in extra-env. At the time of their evaluation,
+u, v are still bound to '*unassigned*, so that if either <e1> or <e2> depend
+on u (or v) being bound to a value, an error will occur.
+
+The difference is that this version enforces the restriction that define variable
+values can be evaluated without using any of the variables' values by forcing the
+evaluation of <e1>, <e2> to occur when u, v are still bound to '*unassigned*.
+
+The version in thetext will also evaluate <e1> when u is bound to '*unassigned*,
+but <e2> will be evaluated with u bound to the result of <e1>.
+
+Thus, the version in the exercise is more strict; it is closer to the meaning of
+"simultaneous".
+
+
+solve will not work if the transformation in this exercise is used, as while
+<e1> : (integral (delay dy) y0 dt)
+can be evaluated with dy bound to '*unassigned*, it is not possible to evaluate
+<e2> : (stream-map f y)
+with y bound to '*unassigned*.
+
+solve will work if the transformation in the text is used, as <e1> can be
+evaluated as-is, and then y is set! to the result of <e1>. Then, when <e2>
+is evaluated, y is not bound to '*unassigned*, hence, it will not error.
+
+|#
+
+
+
+;; Ex. 4.19
+
+#|
+See p. 138 for illustrative expansion of environment and syntax.
+
+Application of the simultaneous scope rule in the text will result
+in an error as a is bound to '*unassigned* at the time (+ a x) is evaluated.
+While a is bound to something other than '*unassigned* in the enclosing environment,
+the environment in which the define's occur really should be separate.
+
+In essence, if we treat procedure definitions differently from variable definitions,
+i.e. apply the sequential rule for variables and simultaneous rule for procedures,
+then we quickly devolve into special cases. We would need to ask at every define that
+looks like a variable: is the value actually a procedure?
+as we could simply prefer to write our procedure as (define f (lambda (...) ...))
+which look like variables (and are), but would in fact need to be treated using
+the simultaneous rule, not sequential.
+
+Thus, the only sane choices are either the simultaneous rule in the text, or a truly
+simultaneous implementation.
+|#
+
+#|
+
+Interestingly, if one reversed the order, i.e. (define a 5) (define b (+ a x)),
+no error would occur using the definition of simultaneous scope in the text --
+but an error would still result from the definition of simultaneous scope in Ex. 4.18.
+
+To implement internal definitions as Eva prefers requires that one re-order define's
+in such a way that each define will have assigned variables in its expression. Then,
+the define's could be executed sequentially. However, as we saw in Ex. 4.18, this does not
+guarantee simultaneity in the strict sense, which requires that each variable-being-defined
+be independent of the other variables-being-defined in that scope.
+
+If we insist upon independent simultaneity, then Ex. 4.18 gives us that.
+
+If we pursue Eva's conditional simultaneity, then we encounter thorny questions about
+valid sequential orderings which appear to be simultaneous, but are in fact partially sequential.
+
+For example, what would one do about:
+(define b (+ a x))
+(define a 5)
+(define a 3)
+
+Which a comes first? and why could we not permit such a re-ordering as:
+(define a 3)
+(define b (+ a x))
+(define a 5)
+;; do something with a
+
+One could suggest that the re-ordering follow the sequential definition of identical variables
+in the source code, rearranging only the variables that are not identical into some order
+which can be evaluated without encountering an unassigned variable -- identical variables
+could be rearranged as blocks, but then what order in the block? (sequential as per the source?)
+
+Very quickly, however, it becomes difficult to reason about what a block of code will actually
+do, as the only general mechanism we can specify is to find a feasible ordering for evaluation.
+However, there will always be multiple feasible orderings once we move beyond two variables.
+
+Thus, it begins to become clear why the MIT implementers of Scheme prefer the definition
+of simultaneity in the text -- it is unambiguous, easy to reason about, and efficient to
+implement, while also permissive around sequential definitions in simultaneous scope,
+which, as shown in Ex. 4.18, can be a desirable property.
+
+
+--Another demonstration of the difficulty of true simultaneity
+
+In fact, even with only two variables, one can obtain multiple feasible orderings, e.g.
+(define a 3)
+(define b (+ a x))
+(define a 5)
+(define b (- a x))
+
+If we forbid multiple defines on the same variable, then perhaps we could determine
+appropriate orderings for
+(define c (* b x))
+(define b (+ a x))
+(define a 5)
+
+However, this would require a full analysis of each expression, followed by
+a search of feasible orderings (of which there are always multiple);
+this is only applicable to "simple" definitions. Something such as
+(define c (begin (set! a (+ a 1)) (* b x)))
+wreaks havoc upon such a strategy -- and this is explicit mutation!
+We have to expect and accommodate the possibility of interior mutation (i.e. on data structures)
+thus, we would have to analyze the entirety of each expression to determine whether
+it mutates (and whether said mutation would have no effect...).
+Moreover, the behavior of code may be quite unexpected compared to hat is written,
+as the rules would be highly convoluted.
+One hopeful language designer might suggest: no mutation!
+But do we really wish for such a cage, all for the sake of "true" simultaneity?
+(the benefits of which appear quite doubtful indeed).
+
+|#
+
