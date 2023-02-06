@@ -125,3 +125,151 @@
 ;; On the other hand, if placed in procedure-body, each time the procedure is
 ;; applied, the defines will be scanned out. Clearly, the latter is far less efficient.
 
+
+;; Ex. 4.17
+
+;; (lambda <vars>
+;;   (define u <e1>)
+;;   (define v <e2>)
+;;   <e3>)
+
+#|
+When evaluated, creates a procedure object: ('procedure <vars> <body> '<env-of-lambda>)
+<e3> will be evaluated when the procedure is applied, e.g. (proc <args>), which
+will cause the procedure to be evaluated as a compound procedure,
+which involves a sequential evaluation of the expressions in the body in an environment
+(extended from the environment of the procedure) in which the arguments are bound to
+the variables.
+
+                                 env-of-lambda
+                                    ^
+                                    |
+                                    |
+                        +------------------+
+                        | <vars> : <args>  |
+                        |                  |
+extended-env  --------->|                  |
+                        |                  |
+                        |                  |
+                        +------------------+
+
+The first define statement adds u: result of evaluating e1 in extended-env
+The second define statement adds v: result of evaluating e2 in extended-env
+Evaluation of e3 occurs in an environment (extended-env) in which <vars>, u, v are bound.
+|#
+
+;; (lambda <vars>
+;;   (let ((u '*unassigned*)
+;;         (v '*unassigned*))
+;;     (set! u <e1>)
+;;     (set! v <e2>)
+;;     <e3>))
+
+#|
+When evaluated, creates a procedure object. The procedure is then called on some args,
+resulting in the creation of an extended environment in which the vars are bound to args.
+
+                                 env-of-lambda
+                                    ^
+                                    |
+                                    |
+                        +------------------+
+                        | <vars> : <args>  |
+                        |                  |
+extended-env  --------->|                  |
+                        |                  |
+                        |                  |
+                        +------------------+
+
+Evaluation of the single body expression results in a lambda being created
+and called on '*unassigned* '*unassigned*
+
+ (lambda (u v)
+   (set! u <e1>)
+   (set! v <e2>)
+   <e3>)
+
+When the lambda is evaluated, a procedure is generated, the environment part of which
+is extended-env. Then, when this procedure is called on '*unassigned* '*unassigned*,
+a new extended environment is created:
+
+                                 extended-env
+                                    ^
+                                    |
+                                    |
+                        +------------------+
+                        | u: '*unassigned* |
+                        | v: '*unassigned* |
+   extra-env  --------->|                  |
+                        |                  |
+                        |                  |
+                        +------------------+
+
+<e1> is then evaluated in this environment and u is set! to the value returned;
+likewise for <e2>, v. Any references to <vars> are resolved by searching the extra-env
+(where they will never be found), and then the enclosing environment (where they are always bound).
+
+|#
+
+#|
+Interestingly, even if one of the <vars> has the same symbol as u or v, there is no difference
+in behavior between the two versions. In the former, the define would simply set! a new value
+for the existing variable. In the latter, the variable is set! to the value, and when the variable
+is looked up, it would be found in the extra environment, rather than the enclosing environment.
+Thus, for a correct program -- in which defined variables can be evaluated without using any
+of the (other) defined variables' values -- there would be no difference.
+
+However, for an incorrect pgoram, e.g. <e1> : (* u 2) where u is a parameter in <vars>,
+there would be a difference. In the first version, this would work as u is bound in
+extended-env and has a valid valid (which is about to be overwritten). In the second version,
+u is bound, but its value (prior to (set! u <e1>)) is '*unassigned*, which will signal an
+error upon lookup.
+|#
+
+;; Implementation of simultaneous scope rule for internal definitions without constructing
+;; the extra frame:
+
+#|
+
+One option is an elaborate program transformation in which the defined variables are added
+to <vars>, the <args> receive additional '*unassigned*'s, and the unassigned variables are
+set! using the same method as in the let version. However, addition of '*unassigned*'s
+to the <args> presents a problem -- it could be done, but it would be an extraordinary mess.
+
+An alternative is to scan out the defines (in whatever order they appear), then
+re-order the body to place define statements before any other expressions.
+This works for any procedure in which in internal definitions have
+value expressions which do not use any of the defined variables.
+This can be implemented by re-using scan-out-defines, but with the modification
+that after separating out the defines and regulars, the regulars are appended to the defines,
+e.g.
+(append (reverse defines) (reverse regulars)) ;; assuming that we used cons in partition
+
+Why it works: there is no difference between sequential and simultaneous programs which
+do not have internal definitions that use any of the defined variables.
+
+Examples:
+
+<vars> : (x y)
+(define u (* x 2))                This program is free from defines that use
+(define v (+ y 3))                internally-defined variables
+
+
+<vars> : (v y)
+(define u (* v 2))                This program contains defines that use variables bound
+(define v (+ y 3))                in the environment, then re-defines these variables
+
+<vars> : (x y)
+(define u (* x 2))                Contains defines that use internally-defined variables
+(define v (+ u x y))
+
+<vars> : (x y)
+(define u (* x 2))                Contains defines that use internally-defined variables,
+(set! u (+ u 1))                  and if re-ordered, has different value.
+(define v (+ u x y))
+
+
+Thus, this is not guaranteed to work when internally-defined variables use any of the
+variables' values.
+
+|#
