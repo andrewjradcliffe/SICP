@@ -276,6 +276,7 @@ this subtle spice.
         (list '>= >=)
         (list '> >)
         (list '< <)
+        (list 'list list) ;; kind of sketchy, but need varargs handling first.
         ;; (list 'not not) ;; this one is a bit sketchy
         (list 'newline newline)
         (list 'display display)
