@@ -93,6 +93,13 @@
 
 (define (thunk-value evaluated-thunk) (cadr evaluated-thunk))
 
+;; Without memoization
+(define (force-it obj)
+  (if (thunk? obj)
+      (actual-value (thunk-exp obj) (thunk-env obj))
+      obj))
+
+;; With memoization
 (define (force-it obj)
   (cond ((thunk? obj)
          (let ((result (actual-value
