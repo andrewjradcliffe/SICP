@@ -658,3 +658,39 @@ environment of the frame created by calling even? will be extended-env, and exte
 has even? and odd? bound (to the correct procedures).
 
 |#
+
+
+;; Ex. 4.21
+
+;; a
+
+((lambda (n)
+   ((lambda (fib)    ;; the initiator of the recursion using the lambda passed as argument.
+      (fib fib n))   ;; By passing the procedure to the procedure, the procedure can then
+    (lambda (fb k)   ;; call itself at will. Otherwise, recursion requires a named variable.
+           (cond ((= k 0) 0)
+                 ((= k 1) 1)
+                 (else (+ (fb fb (- k 1))
+                          (fb fb (- k 2))))))))
+ 10)
+
+
+;; b
+
+;; In essence, pass the procedures in the same positions as the initiator.
+;; Thus, the internals of each procedure receive the procedures in the
+;; same positions so that no confusion can arise about which procedure is bound
+;; to which variable.
+
+(define (f x)
+  ((lambda (even? odd?)
+     (even? even? odd? x))
+   (lambda (ev? od? n)
+     (if (= n 0)
+         true
+         (od? ev? od? (- n 1))))
+   (lambda (ev? od? n)
+     (if (= n 0)
+         false
+         (ev? ev? od? (- n 1))))))
+
