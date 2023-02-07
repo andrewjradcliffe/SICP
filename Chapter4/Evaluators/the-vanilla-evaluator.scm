@@ -323,18 +323,18 @@ this subtle spice.
 
 ;; Then, to run the evaluator
 (define the-global-environment (setup-environment))
-(driver-loop)
+;; (driver-loop)
 
 
-(define (append x y)
-  (if (null? x)
-      y
-      (cons (car x)
-            (append (cdr x) y))))
+;; (define (append x y)
+;;   (if (null? x)
+;;       y
+;;       (cons (car x)
+;;             (append (cdr x) y))))
 
-(append '(a b c) '(d e f))
+;; (append '(a b c) '(d e f))
 
-(define (factorial n)
-  (if (= n 1)
-      1
-      (* (factorial (- n 1)) n)))
+;; (define (factorial n)
+;;   (if (= n 1)
+;;       1
+;;       (* (factorial (- n 1)) n)))
