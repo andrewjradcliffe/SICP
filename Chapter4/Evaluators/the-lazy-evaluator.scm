@@ -64,6 +64,12 @@
       (eval (if-consequent exp) env)
       (eval (if-alternative exp) env)))
 
+;; ;; Cy D. Fect's proposal.
+;; (define (eval-sequence exps env)
+;;   (cond ((last-exp? exps) (eval (first-exp exps) env))
+;;         (else (actual-value (first-exp exps) env)
+;;               (eval-sequence (rest-exps exps) env))))
+
 
 (define input-prompt ";;; L-Eval input:")
 (define output-prompt ";;; L-Eval value:")
@@ -112,7 +118,6 @@
         ((evaluated-thunk? obj)
          (thunk-value obj))
         (else obj)))
-
 
 ;; Environment and driver
 (define the-global-environment (setup-environment))
