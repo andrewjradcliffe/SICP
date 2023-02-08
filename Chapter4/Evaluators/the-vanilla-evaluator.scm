@@ -317,7 +317,7 @@ this subtle spice.
 (define (user-print object)
   (if (compound-procedure? object)
       (display (list 'compound-procedure
-                     (procedure-paramaters object)
+                     (procedure-parameters object)
                      (procedure-body object)
                      '<procedure-env>))
       (display object)))
