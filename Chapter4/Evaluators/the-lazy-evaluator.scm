@@ -121,4 +121,4 @@
 
 ;; Environment and driver
 (define the-global-environment (setup-environment))
-;; (driver-loop)
+(driver-loop)

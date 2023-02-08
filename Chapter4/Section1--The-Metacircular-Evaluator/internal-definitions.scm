@@ -693,4 +693,3 @@ has even? and odd? bound (to the correct procedures).
      (if (= n 0)
          false
          (ev? ev? od? (- n 1))))))
-

@@ -57,5 +57,3 @@ A pathetic example:
 (f list 'x 'y 'z)      ;; (x y z)
 
 |#
-
-
