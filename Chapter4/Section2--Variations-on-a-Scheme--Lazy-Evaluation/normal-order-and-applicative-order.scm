@@ -316,3 +316,130 @@ state of whatever variables are touched, whereas each evaluated thunk is unchang
 Thus, Cy's proposal seems even more difficult to reason about.
 
 |#
+
+
+;; Ex. 4.31
+
+#|
+A feasible approach, which does not impose extensive changes, is to package
+the signals with the parameters, then modify the make-procedure call to ensure
+that parameters include signals. In essence, treat lambda's identically up to the
+point at which a procedure object is constructed.
+
+This enables procedure definition using define to create arbitrary mixtures of
+lazy, lazy with memoization, or regularly evaluated parameters. However, it does
+not enable the same syntax for lambda's, for which it provides only regular evaluation.
+|#
+
+(define (make-procedure parameters body env)
+  (cond ((null? parameters)
+         (list 'procedure (cons '() '()) body env))
+        ((not (symbol? (car parameters)))
+         (list 'procedure parameters body env))
+        (else ;; not the most efficient, but works. Could cons with '() and
+         ;; modify apply to examine the signals part of the pair.
+         (list 'procedure (cons parameters (map (lambda (x) 'ordinary) parameters))
+               body env))))
+
+(define (procedure-parameters p) (caadr p))
+(define (procedure-signals p) (cdadr p))
+
+(define (apply procedure arguments env)
+  (cond ((primitive-procedure? procedure)
+         (apply-primitive-procedure
+          procedure
+          (list-of-arg-values arguments env)))
+        ((compound-procedure? procedure)
+         (eval-sequence
+          (procedure-body procedure)
+          (extend-environment
+           (procedure-parameters procedure)
+           (list-of-maybe-delayed-args (procedure-signals procedure) arguments env)
+           (procedure-environment procedure))))
+        (else
+         (error
+          "Unknown procedure type -- APPLY" procedure))))
+
+(define (maybe-delay-it signal exp env)
+  (cond ((eq? signal 'lazy)
+         (list 'non-memo-thunk exp env))
+        ((eq? signal 'lazy-memo)
+         (list 'thunk exp env))
+        ((eq? signal 'ordinary)
+         (actual-value exp env))
+        (else
+         (error "Unknown signal type -- MAYBE-DELAY-IT" signal))))
+
+(define (list-of-maybe-delayed-args signals exps env)
+  (if (no-operands? exps)
+      '()
+      (cons (maybe-delay-it (car signals) (first-operand exps) env)
+            (list-of-maybe-delayed-args (cdr signals) (rest-operands exps) env))))
+
+(define (non-memo-thunk? obj)
+  (tagged-list? obj 'non-memo-thunk))
+
+(define (force-it obj)
+  (cond ((thunk? obj)
+         (let ((result (actual-value
+                        (thunk-exp obj)
+                        (thunk-env obj))))
+           (set-car! obj 'evaluated-thunk)
+           (set-car! (cdr obj) result)
+           (set-cdr! (cdr obj) '())
+           result))
+        ((evaluated-thunk? obj)
+         (thunk-value obj))
+        ((non-memo-thunk? obj)
+         (actual-value (thunk-exp obj) (thunk-env obj)))
+        (else obj)))
+
+(define (parameter-variable exp)
+  (if (symbol? exp)
+      exp
+      (car exp)))
+(define (parameter-signal exp)
+  (if (symbol? exp)
+      'ordinary
+      (cadr exp)))
+
+(define (parameters-signals sequence)
+  (define (iter params signals seq)
+    (if (null? seq)
+        (cons params signals)
+        (let ((first (car seq))
+              (rest (cdr seq)))
+          (if (symbol? first)
+              (iter (append params (list first))
+                    (append signals (list 'ordinary))
+                    rest)
+              (iter (append params (list (car first)))
+                    (append signals (list (cadr first)))
+                    rest)))))
+  (if (null? sequence)
+      '()
+      (iter '() '() sequence)))
+
+(define (definition-value exp)
+  (if (symbol? (cadr exp))
+      (caddr exp)
+      (make-lambda (parameters-signals (cdadr exp))
+                   (cddr exp))))
+
+
+;; A test
+(define count 0)
+(define (id (x lazy-memo))
+  (set! count (+ count 1))
+  x)
+(define (square (x lazy-memo)) (* x x))
+(square (id 10)) ;; count should now be 1
+count
+
+(define count 0)
+(define (id (x lazy))
+  (set! count (+ count 1))
+  x)
+(define (square (x lazy)) (* x x))
+(square (id 10)) ;; count should now be 2
+count
