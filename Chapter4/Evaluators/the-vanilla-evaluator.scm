@@ -77,6 +77,7 @@ this subtle spice.
 (define (self-evaluating? exp)
   (cond ((number? exp) true)
         ((string? exp) true)
+        ((null? exp)) ;; useful so that the empty list is recognized.
         (else false)))
 
 (define (variable? exp) (symbol? exp))
