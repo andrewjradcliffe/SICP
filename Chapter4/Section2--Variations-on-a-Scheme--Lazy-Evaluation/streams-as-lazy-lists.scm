@@ -32,7 +32,7 @@ unresolved variables.
 ((quoted? exp)
  (if (symbol? (text-of-quotation exp))
      (text-of-quotation exp)
-     (quoted-list->lazy-list exp)))
+     (eval (quoted-list->lazy-list exp) env)))
 
 
 ;; Ex. 4.34
