@@ -45,10 +45,13 @@ unresolved variables.
            (equal? '((m x y)) (procedure-body p)))
       false))
 
+;; Operating on the procedures themselves is error-prone.
 (define (user-print object)
   (cond ((cons-procedure? object)
          (display "(")
-         (display (actual-value (list 'car object) the-global-environment))
+         ;; (display (actual-value (list 'car object) the-global-environment))
+         (display (apply 'car object the-global-environment))
+         (display "hi")
          (let ((next (actual-value (list 'cdr object) the-global-environment)))
            (if (cons-procedure? next)
                (display " ")
@@ -62,3 +65,36 @@ unresolved variables.
                         '<procedure-env>)))
         (else (display object))))
 
+
+;; Another attempt
+(define (driver-loop)
+  (prompt-for-input input-prompt)
+  (let ((input (read)))
+    (let ((output
+           (actual-value input the-global-environment)))
+      (announce-output output-prompt)
+      (if (cons-procedure? output)
+          ;; Quite a mistake to forget that cons is lazy!
+          ;; (let ((vals (actual-value (list 'map '(lambda (x) x) input) the-global-environment)))
+          ;;   (let ((first (car vals))
+          ;;         (rest (cdr vals)))
+          ;;     (display "(")
+          ;;     (user-print first)
+          ;;     (for-each (lambda (x) (display " ") (user-print x)) rest)
+          ;;     (display ")")))
+          ;; Safe only for lists of primitive types!
+          (begin (actual-value (list
+                                'begin
+                                (list 'display "(")
+                                (list 'display (list 'car input))
+                                (list 'for-each '(lambda (x) (display " ") (display x))
+                                      (list 'cdr input))
+                                (list 'display ")")
+                                )
+                               the-global-environment)
+                 ;; (user-print (actual-value (list 'car input) the-global-environment))
+                 )
+          (user-print output))
+      ;; (user-print output)
+      ))
+  (driver-loop))
