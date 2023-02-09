@@ -30,7 +30,7 @@ unresolved variables.
 
 ;; within eval:
 ((quoted? exp)
- (if (symbol? (text-of-quotation exp))
+ (if (or (symbol? (text-of-quotation exp)) (number? (text-of-quotation exp)))
      (text-of-quotation exp)
      (eval (quoted-list->lazy-list exp) env)))
 
