@@ -282,7 +282,9 @@ this subtle spice.
         (list 'newline newline)
         (list 'display display)
         ;; more primitives
-        ))
+        (list 'number? number?)
+        (list 'symbol? symbol?)
+        (list 'string? string?)))
 
 (define (primitive-procedure-names)
   (map car
