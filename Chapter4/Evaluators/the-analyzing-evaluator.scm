@@ -94,12 +94,21 @@
 
 
 (define the-global-environment (setup-environment))
-(driver-loop)
+;; (define-variable! 'runtime (list 'primitive runtime) the-global-environment)
+;; (driver-loop)
 
-(define (fib n)
-  (cond ((= n 0) 0)
-        ((= n 1) 1)
-        (else (+ (fib (- n 1))
-                 (fib (- n 2))))))
+;; (define (fib n)
+;;   (cond ((= n 0) 0)
+;;         ((= n 1) 1)
+;;         (else (+ (fib (- n 1))
+;;                  (fib (- n 2))))))
 
-(fib 30)
+;; (fib 30)
+
+;; ;; At minimum, need let to run this properly
+;; (define (timeit proc)
+;;   (let ((t0 (runtime)))
+;;     (proc)
+;;     (- (runtime) t0)))
+
+;; (timeit (lambda () (fib 25)))
