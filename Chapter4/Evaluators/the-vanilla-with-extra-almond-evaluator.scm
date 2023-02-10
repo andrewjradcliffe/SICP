@@ -361,7 +361,7 @@ Vanilla with almond is excellent, and maintains the minimalist philosophy.
               (append (map (lambda (var exp) (list 'set! var exp)) vars (letrec-exps exp))
                       (letrec-body exp)))))
 
-;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;; Tests
 (define the-global-environment (setup-environment))
 (driver-loop)
 
@@ -384,9 +384,18 @@ Vanilla with almond is excellent, and maintains the minimalist philosophy.
 ((lambda (n)
    (define a 1)
    (define b 2)
-   (+ a b))
+   (+ a b n))
  10)
 (define (g n)
   (define a 1)
   (define b 2)
   (+ a b n))
+(g 10)
+
+;; Fails as expected.
+(let ((a 1))
+  (define (f x)
+    (define b (+ a x))
+    (define a 5)
+    (+ a b))
+  (f 10))
