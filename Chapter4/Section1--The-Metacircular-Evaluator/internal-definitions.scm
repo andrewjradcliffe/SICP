@@ -40,7 +40,7 @@
           exps ;; or, regulars, which is equivalent
           (let ((vars (map definition-variable defines))
                 (vals (map definition-value defines)))
-            (make-let (map (lambda (x) (list x '*unassigned*)) vars)
+            (make-let (map (lambda (x) (list x ''*unassigned*)) vars)
                       (append (map (lambda (x y) (list 'set! x y)) vars vals)
                               regulars)))))))
 
@@ -53,7 +53,7 @@
         exps ;; or, regulars, which is equivalent
         (let ((vars (map definition-variable defines))
               (vals (map definition-value defines)))
-          (make-let (map (lambda (x) (list x '*unassigned*)) vars)
+          (make-let (map (lambda (x) (list x ''*unassigned*)) vars)
                     (append (map (lambda (x y) (list 'set! x y)) vars vals)
                             regulars))))))
 
@@ -74,7 +74,7 @@
         (let ((var (definition-variable (car defines)))
               (val (definition-value (car defines))))
           (iter (cdr defines)
-                (cons (list var '*unassigned*) bindings)
+                (cons (list var ''*unassigned*) bindings)
                 (cons (list 'set! var val) exps)))))
   (let ((defines-regulars (partition '() '() exps)))
     (let ((defines (car defines-regulars))
@@ -103,7 +103,7 @@
           (if (definition? first)
               (let ((var (definition-variable first))
                     (val (definition-value first)))
-                (iter (append bindings (list (list var '*unassigned*)))
+                (iter (append bindings (list (list var ''*unassigned*)))
                       (append set!-exps (list (list 'set! var val)))
                       body-exps
                       rest))
@@ -491,7 +491,7 @@ Transformation to form in Ex. 4.18
 ;; Syntax transformation to form in text
 (define (letrec->let exp)
   (let ((vars (letrec-variables exp)))
-    (make-let (map (lambda (var) (list var '*unassigned*)) vars)
+    (make-let (map (lambda (var) (list var ''*unassigned*)) vars)
               (append (map (lambda (var exp) (list 'set! var exp)) vars (letrec-exps exp))
                       (letrec-body exp)))))
 
@@ -499,7 +499,7 @@ Transformation to form in Ex. 4.18
 (define (letrec->let exp)
   (let ((vars (letrec-variables exp)))
     (let ((hvars (map (lambda (var) (join-symbol 'h var)) vars)))
-      (make-let (map (lambda (var) (list var '*unassigned*)) vars)
+      (make-let (map (lambda (var) (list var ''*unassigned*)) vars)
                 (cons (make-let (map (lambda (hvar exp) (list hvar exp)) hvars (letrec-exps exp))
                                 (map (lambda (var hvar) (list 'set! var hvar)) vars hvars))
                       (letrec-body exp))))))
