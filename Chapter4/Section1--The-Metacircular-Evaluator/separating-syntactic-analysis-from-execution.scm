@@ -83,3 +83,27 @@ overhead: loop predicate evaluation, loop consequent evaluation.
 Beyond loops, deep expressions are likely to lead to very different performance.
 Furthermore, large sequences of expressions will have very different performance.
 |#
+
+;; A suitable test:
+(define the-global-environment (setup-environment))
+(define-variable! 'runtime (list 'primitive runtime) the-global-environment)
+(driver-loop)
+
+(define (fib n)
+  (cond ((= n 0) 0)
+        ((= n 1) 1)
+        (else (+ (fib (- n 1))
+                 (fib (- n 2))))))
+
+(define (timeit proc)
+  (let ((t0 (runtime)))
+    (proc)
+    (- (runtime) t0)))
+
+(timeit (lambda () (fib 25)))
+
+;; (fib 25)
+;;
+;; 39.46 in evaluator without syntactic analysis
+;; 17.37 in evaluator with syntactic analysis
+;; .16999999999999815 in mit-scheme
