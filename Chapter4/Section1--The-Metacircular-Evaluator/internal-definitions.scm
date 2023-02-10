@@ -103,8 +103,8 @@
           (if (definition? first)
               (let ((var (definition-variable first))
                     (val (definition-value first)))
-                (iter (append bindings (list var '*unassigned*))
-                      (append set!-exps (list 'set! var val))
+                (iter (append bindings (list (list var '*unassigned*)))
+                      (append set!-exps (list (list 'set! var val)))
                       body-exps
                       rest))
               (iter bindings set!-exps (append body-exps (list first)) rest)))))
