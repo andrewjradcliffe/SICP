@@ -40,9 +40,9 @@
           exps ;; or, regulars, which is equivalent
           (let ((vars (map definition-variable defines))
                 (vals (map definition-value defines)))
-            (make-let (map (lambda (x) (list x ''*unassigned*)) vars)
-                      (append (map (lambda (x y) (list 'set! x y)) vars vals)
-                              regulars)))))))
+            (list (make-let (map (lambda (x) (list x ''*unassigned*)) vars)
+                            (append (map (lambda (x y) (list 'set! x y)) vars vals)
+                                    regulars))))))))
 
 
 ;; Version 1.2: in forward order, the short way
@@ -53,9 +53,9 @@
         exps ;; or, regulars, which is equivalent
         (let ((vars (map definition-variable defines))
               (vals (map definition-value defines)))
-          (make-let (map (lambda (x) (list x ''*unassigned*)) vars)
-                    (append (map (lambda (x y) (list 'set! x y)) vars vals)
-                            regulars))))))
+          (list (make-let (map (lambda (x) (list x ''*unassigned*)) vars)
+                          (append (map (lambda (x y) (list 'set! x y)) vars vals)
+                                  regulars)))))))
 
 ;; Version 2: in reverse order, the long way
 (define (scan-out-defines exps)
@@ -70,7 +70,7 @@
               (partition defines (cons first regulars) rest)))))
   (define (iter defines bindings exps)
     (if (null? defines)
-        (make-let bindings exps)
+        (list (make-let bindings exps))
         (let ((var (definition-variable (car defines)))
               (val (definition-value (car defines))))
           (iter (cdr defines)
@@ -97,7 +97,7 @@
     (if (null? exps)
         (if (null? bindings)
             body-exps
-            (make-let bindings (append set!-exps body-exps)))
+            (list (make-let bindings (append set!-exps body-exps))))
         (let ((first (car exps))
               (rest (cdr exps)))
           (if (definition? first)

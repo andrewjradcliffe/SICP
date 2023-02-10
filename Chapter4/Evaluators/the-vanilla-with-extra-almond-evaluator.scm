@@ -330,7 +330,7 @@ Vanilla with almond is excellent, and maintains the minimalist philosophy.
     (if (null? exps)
         (if (null? bindings)
             body-exps
-            (make-let bindings (append set!-exps body-exps)))
+            (list (make-let bindings (append set!-exps body-exps))))
         (let ((first (car exps))
               (rest (cdr exps)))
           (if (definition? first)
