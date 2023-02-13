@@ -46,27 +46,27 @@
     (let ((output
            (actual-value input the-global-environment)))
       (announce-output output-prompt)
-      ;; (if (cons-procedure? output)
-      ;;     (user-print (lookup-variable-value 'x (procedure-environment output))))
       (user-print output)))
   (driver-loop))
 
 
 (define the-global-environment (setup-environment))
 (driver-loop)
+
+;; Then, replace the primitives with procedural definitions
 (define (cons x y)
   (lambda (m) (m x y)))
 (define (car z)
   (z (lambda (p q) p)))
 (define (cdr z)
   (z (lambda (p q) q)))
-;; (define unspecific 'Unspecified-return-value)
-(define (for-each proc items)
-  (if (null? items)
-      'done
-      (begin (proc (car items))
-             (for-each proc (cdr items)))))
 
+
+;; Some tests
+
+(cons 1 2)
+(cons 1 '())
+(cons 1 (cons 2 '()))
 
 (define x '(1 2 3))
 
