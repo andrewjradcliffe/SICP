@@ -103,6 +103,9 @@ unresolved variables.
   (driver-loop))
 
 ;; Attempt 3: The solution. In essence, carefully force the components.
+;; Sadly, these are defective. They print pairs properly, but lists
+;; are printed as nested pairs.
+;; e.g. (cons 1 (cons 2 '()))    =>    (1 (2))
 (define (user-print object)
   (cond ((cons-procedure? object)
          (display "(")
@@ -144,3 +147,36 @@ unresolved variables.
                         (procedure-body object)
                         '<procedure-env>)))
         (else (display object))))
+
+
+
+;; Attempt 4: Printing of lists identical to Scheme.
+;; In essence, once we begin printing a list (or pair), print the left parenthesis,
+;; print all internal contents, then print the right parenthesis.
+(define (user-print object)
+  (cond ((cons-procedure? object)
+         (display "(")
+         (let ((x (force-it (lookup-variable-value 'x (procedure-environment object))))
+               (y (force-it (lookup-variable-value 'y (procedure-environment object)))))
+           (user-print x)
+           (user-print-list y))
+         (display ")"))
+        ((compound-procedure? object)
+         (display (list 'compound-procedure
+                        (procedure-parameters object)
+                        (procedure-body object)
+                        '<procedure-env>)))
+        (else (display object))))
+
+(define (user-print-list object)
+  (cond ((cons-procedure? object)
+         (display " ")
+         (let ((x (force-it (lookup-variable-value 'x (procedure-environment object))))
+               (y (force-it (lookup-variable-value 'y (procedure-environment object)))))
+           (user-print x)
+           (user-print-list y)))
+        ((null? object)
+         (display ""))
+        (else
+         (display " . ")
+         (user-print object))))
