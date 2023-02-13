@@ -49,6 +49,35 @@
       (user-print output)))
   (driver-loop))
 
+(define (user-print object)
+  (cond ((cons-procedure? object)
+         (display "(")
+         (let ((x (force-it (lookup-variable-value 'x (procedure-environment object))))
+               (y (force-it (lookup-variable-value 'y (procedure-environment object)))))
+           (user-print x)
+           (user-print-list y))
+         (display ")"))
+        ((compound-procedure? object)
+         (display (list 'compound-procedure
+                        (procedure-parameters object)
+                        (procedure-body object)
+                        '<procedure-env>)))
+        (else (display object))))
+
+(define (user-print-list object)
+  (cond ((cons-procedure? object)
+         (display " ")
+         (let ((x (force-it (lookup-variable-value 'x (procedure-environment object))))
+               (y (force-it (lookup-variable-value 'y (procedure-environment object)))))
+           (user-print x)
+           (user-print-list y)))
+        ((null? object)
+         (display ""))
+        (else
+         (display " . ")
+         (user-print object))))
+
+
 
 (define the-global-environment (setup-environment))
 (driver-loop)
