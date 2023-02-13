@@ -45,13 +45,11 @@ unresolved variables.
            (equal? '((m x y)) (procedure-body p)))
       false))
 
-;; Operating on the procedures themselves is error-prone.
+;; Attempt 1: Operating on the procedures themselves is error-prone.
 (define (user-print object)
   (cond ((cons-procedure? object)
          (display "(")
-         ;; (display (actual-value (list 'car object) the-global-environment))
-         (display (apply 'car object the-global-environment))
-         (display "hi")
+         (display (actual-value (list 'car object) the-global-environment))
          (let ((next (actual-value (list 'cdr object) the-global-environment)))
            (if (cons-procedure? next)
                (display " ")
@@ -66,7 +64,12 @@ unresolved variables.
         (else (display object))))
 
 
-;; Another attempt
+;; Attempt 2: Another failed attempt. Using the implemented language itself is problematic
+;; as printing of procedures is guaranteed to be a problem -- unless one installs
+;; a primitive procedure?, but that would only allow one to prevent the printing
+;; of procedure objects as literals. How to print these would then become an adventure
+;; in exposing the implementation language to the implemented language -- clearly,
+;; such circular reasoning is best avoided from the start.
 (define (driver-loop)
   (prompt-for-input input-prompt)
   (let ((input (read)))
