@@ -101,3 +101,46 @@ unresolved variables.
       ;; (user-print output)
       ))
   (driver-loop))
+
+;; Attempt 3: The solution. In essence, carefully force the components.
+(define (user-print object)
+  (cond ((cons-procedure? object)
+         (display "(")
+         (let ((x (force-it (lookup-variable-value 'x (procedure-environment object))))
+               (y (force-it (lookup-variable-value 'y (procedure-environment object)))))
+           (user-print x)
+           ;; This can be slightly fancier, to handle the empty list at the end of a list.
+           (if (cons-procedure? y)
+               (display " ")
+               (display " . "))
+           (user-print y))
+         (display ")"))
+        ((compound-procedure? object)
+         (display (list 'compound-procedure
+                        (procedure-parameters object)
+                        (procedure-body object)
+                        '<procedure-env>)))
+        (else (display object))))
+
+;; This can be slightly fancier, to handle the empty list at the end of a list.
+(define (user-print object)
+  (cond ((cons-procedure? object)
+         (display "(")
+         (let ((x (force-it (lookup-variable-value 'x (procedure-environment object))))
+               (y (force-it (lookup-variable-value 'y (procedure-environment object)))))
+           (user-print x)
+           (cond ((cons-procedure? y)
+                  (display " ")
+                  (user-print y))
+                 ((null? y)
+                  (display ""))
+                 (else
+                  (display " . ")
+                  (user-print y))))
+         (display ")"))
+        ((compound-procedure? object)
+         (display (list 'compound-procedure
+                        (procedure-parameters object)
+                        (procedure-body object)
+                        '<procedure-env>)))
+        (else (display object))))
