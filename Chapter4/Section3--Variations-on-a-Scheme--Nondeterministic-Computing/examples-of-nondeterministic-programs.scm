@@ -35,7 +35,7 @@ i.e.
 
 
 #|
-The modified puzzle admits 6 solutions:
+The modified puzzle admits 5 solutions:
 
 Initial
 _______
@@ -70,14 +70,6 @@ fletcher
 miller
 
 Feasible#4
-__________
-baker
-fletcher
-smith
-cooper
-miller
-
-Feasible#5
 __________
 baker
 cooper
