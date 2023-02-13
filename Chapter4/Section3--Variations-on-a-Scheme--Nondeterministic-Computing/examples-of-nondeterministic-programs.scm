@@ -178,3 +178,92 @@ Then, we consider a second improvement which exploits the structure of the probl
                   (list 'fletcher fletcher)
                   (list 'miller miller)
                   (list 'smith smith))))))))
+
+
+;; Ex. 4.41
+
+#|
+Not the most efficient approach, but works.
+Easier to extend to the logic of Ex. 4.38 than the highly customized approach
+of Ex. 4.40.
+|#
+(define (caddddr x) (car (cddddr x)))
+(define (flatmap proc seq)
+  (fold-right append '() (map proc seq)))
+(define (my-remove item seq)
+  (filter (lambda (x) (not (= x item))) seq))
+(define (permutations s)
+  (if (null? s)
+      (list '())
+      (flatmap (lambda (x)
+                 (map (lambda (p) (cons x p))
+                      (permutations (my-remove x s))))
+               s)))
+
+(define (feasible-dwelling-assignment? dwelling-list)
+  (let ((baker (car dwelling-list))
+        (cooper (cadr dwelling-list))
+        (fletcher (caddr dwelling-list))
+        (miller (cadddr dwelling-list))
+        (smith (caddddr dwelling-list)))
+    (and (not (= baker 5))
+         (not (= cooper 1))
+         (not (= fletcher 5))
+         (not (= fletcher 1))
+         (> miller cooper)
+         (not (= (abs (- smith fletcher)) 1))
+         (not (= (abs (- fletcher cooper)) 1)))))
+
+(define (multiple-dwelling)
+  (map (lambda (x)
+         (list (list 'baker (car x))
+               (list 'cooper (cadr x))
+               (list 'fletcher (caddr x))
+               (list 'miller (cadddr x))
+               (list 'smith (caddddr x))))
+       (filter feasible-dwelling-assignment?
+               (permutations (list 1 2 3 4 5)))))
+(multiple-dwelling)
+
+;; Demonstrate ease of application to logic of Ex. 4.38
+(define (feasible-dwelling-assignment-modified? dwelling-list)
+  (let ((baker (car dwelling-list))
+        (cooper (cadr dwelling-list))
+        (fletcher (caddr dwelling-list))
+        (miller (cadddr dwelling-list))
+        (smith (caddddr dwelling-list)))
+    (and (not (= baker 5))
+         (not (= cooper 1))
+         (not (= fletcher 5))
+         (not (= fletcher 1))
+         (> miller cooper)
+         (not (= (abs (- fletcher cooper)) 1)))))
+
+(define (multiple-dwelling-modified)
+  (map (lambda (x)
+         (list (list 'baker (car x))
+               (list 'cooper (cadr x))
+               (list 'fletcher (caddr x))
+               (list 'miller (cadddr x))
+               (list 'smith (caddddr x))))
+       (filter feasible-dwelling-assignment-modified?
+               (permutations (list 1 2 3 4 5)))))
+(multiple-dwelling-modified)
+
+;; The generalization
+
+(define (multiple-dwelling-arbitrary satisfies-constraints?)
+  (map (lambda (x)
+         (list (list 'baker (car x))
+               (list 'cooper (cadr x))
+               (list 'fletcher (caddr x))
+               (list 'miller (cadddr x))
+               (list 'smith (caddddr x))))
+       (filter satisfies-constraints?
+               (permutations (list 1 2 3 4 5)))))
+
+;; We can then express the original and modified versions as:
+(define multiple-dwelling
+  (multiple-dwelling-arbitrary feasible-dwelling-assignment?))
+(define multiple-dwelling-modified
+  (multiple-dwelling-arbitrary feasible-dwelling-assignment-modified?))
