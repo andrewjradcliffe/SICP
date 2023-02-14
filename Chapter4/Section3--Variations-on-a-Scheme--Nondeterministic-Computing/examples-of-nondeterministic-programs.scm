@@ -406,3 +406,100 @@ Parker                *Lorna                  **Mary Ann
                 ((eq? 'lorna (cadr hall)) 'hall)
                 ((eq? 'lorna (cadr parker)) 'parker)))))))
 
+
+
+;; Ex. 4.44
+
+
+;; Surprisingly terse compared to the version in Ex. 2.42
+(define (queens board-size)
+  (define (iter positions k)
+    (if (not (= k board-size))
+        (let ((new-positions
+               (adjoin-position (an-integer-between 1 board-size) k positions)))
+          (require (safe? k new-positions))
+          (iter new-positions (+ k 1)))
+        positions))
+  (iter (list empty-board) 0))
+
+
+
+;;;;;;;;;;;;;;;; Parsing natural language
+
+;; Ex. 4.45
+
+;; Parse #1
+(sentence
+ (simple-noun-phrase (article the) (noun professor))
+ (verb-phrase
+  (verb-phrase
+   (verb lectures)
+   (prep-phrase (prep to)
+                (simple-noun-phrase (article the) (noun student))))
+  (prep-phrase (prep in)
+               (noun-phrase
+                (simple-noun-phrase (article the) (noun class))
+                (prep-phrase (prep with)
+                             (simple-noun-phrase (article the) (noun cat)))))))
+
+;; Parse #2
+(sentence
+ (simple-noun-phrase (article the) (noun professor))
+ (verb-phrase
+  (verb-phrase
+   (verb lectures)
+   (prep-phrase (prep to)
+                (noun-phrase
+                 (simple-noun-phrase (article the) (noun student))
+                 (prep-phrase (prep in)
+                              (simple-noun-phrase (article the) (noun class))))))
+  (prep-phrase (prep with)
+               (simple-noun-phrase (article the) (noun cat)))))
+
+;; Parse #3
+(sentence
+ (simple-noun-phrase (article the) (noun professor))
+ (verb-phrase
+  (verb lectures)
+  (prep-phrase (prep to)
+               (noun-phrase
+                (simple-noun-phrase (article the) (noun student))
+                (prep-phrase (prep in)
+                             (noun-phrase
+                              (simple-noun-phrase (article the) (noun class))
+                              (prep-phrase (prep with)
+                                           (simple-noun-phrase (article the) (noun cat)))))))))
+
+;; Parse #4
+(sentence
+ (simple-noun-phrase (article the) (noun professor))
+ (verb-phrase
+  (verb-phrase
+   (verb-phrase
+    (verb lectures)
+    (prep-phrase (prep to)
+                 (simple-noun-phrase (article the) (noun student))))
+   (prep-phrase (prep in)
+                (simple-noun-phrase (article the) (noun class))))
+  (prep-phrase (prep with)
+               (simple-noun-phrase (article the) (noun cat)))))
+
+;; Parse #5
+;; ??
+
+
+;; Ex. 4.46
+#|
+See p. 164 for a long but convoluted answer. Below is the simpler answer.
+
+If we evaluated right-to-left, but followed the logic stated on p. 415-416,
+then the selection of the first choice presented to amb would fail due to the
+fact that the state of the parse has changed prior to the evaluation of amb
+(thus, there is nothing to backtrack to but the next choice).
+In essence, this precludes the possibility of taking the first choice for sentences
+such as given in Ex.4.45 -- it is possible for the remnants of a sentence to be
+parsable, but we still cannot avoid the problem that right-to-left evaluation
+with the use of mutable state makes it impossible to visit some valid parses.
+|#
+
+;; Ex. 4.47
