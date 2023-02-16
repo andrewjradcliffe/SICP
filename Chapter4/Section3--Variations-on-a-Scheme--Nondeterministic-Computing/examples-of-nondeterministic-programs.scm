@@ -502,4 +502,37 @@ parsable, but we still cannot avoid the problem that right-to-left evaluation
 with the use of mutable state makes it impossible to visit some valid parses.
 |#
 
-;; Ex. 4.47
+#|
+Actually, there is an even simpler answer still:
+right-to-left evaluation everywhere would mean that in procedures
+such as parse-prepositional-phrase and parse-sentence, that, respectively,
+parse-noun-phrase and parse-verb-phrase would be evaluated first, at which time
+the *unpaired* input would still contain a part of speed that is not, respectively,
+a noun or verb phrase. Thus, the attempted evaluation will fail. This is particularly
+poignant for parse-sentence, as our grammar is defined to be a noun-phrase followed by
+verb-phrase. Attempting to parse the verb-phrase first will fail, initiating a
+backtracking step, but there is nowhere to backtrack to -- this is the first
+effective choice point. Specifically, (parse-word verbs) would be the first call;
+it contains:
+(require (not (null? *unparsed*)))                    ; always succeeds
+(require (memq (car *unparsed*) (cdr word-list)))     ; failing choice point
+
+Thus, we have an infinite loop:
+
+         ^
+         |
+       0 |    +---------------------------+
+         +----| (not (null? *unparsed*))  |----+
+              +---------------------------+    | 1
+                     ^                         |
+                     |                         v
+                  0  |   -+-----------------------------------------+
+                     +----| (memq (car *unparsed*) (cdr word-list)) |----+
+                          +-----------------------------------------+    | 1
+                                                                         |
+                                                                         v
+
+The failure branch of the not null? machine can never be reached.
+Likewise, the success branch of the memq machine is impossible as the
+grammar begins with a noun phrase.
+|#
