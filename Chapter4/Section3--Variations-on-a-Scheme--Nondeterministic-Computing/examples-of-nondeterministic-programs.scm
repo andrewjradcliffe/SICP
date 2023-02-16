@@ -536,3 +536,63 @@ The failure branch of the not null? machine can never be reached.
 Likewise, the success branch of the memq machine is impossible as the
 grammar begins with a noun phrase.
 |#
+
+
+;; Ex 4.47
+
+#|
+This does not work. Louis' proposal leads to the choice point being between
+either a parse-word or a fully-formed list. If we take a parse-word branch,
+the input will not be empty, thus we backtrack and try to construct a fully-formed
+list. (parse-verb-phrase) will take the left branch, yielding a single verb,
+and parse-prepositional-phrase will strip only 1 preposition (it takes left-branch).
+However, the fully-formed list does not empty the input. Thus, we go back to the choice
+point -- but we have exhausted our apparent options. We then backtrack to
+parse-noun-phrase in parse-sentence, which succeeds, hence we re-enter parse-verb-phrase,
+thereby forming an infinite loop.
+
+If we interchange the order of expressions, then we get an infinite recursion, as the first
+action of each step is parse-verb-phrase, which simply leads to a successful call of itself.
+Since every amb is successful, (parse-word verbs) never occurs.
+|#
+
+;; Ex. 4.48
+(define adjectives '(adjective small medium large))
+(define adverbs ('adverb slowly rapidly))
+
+(define (parse-adjective-noun-phrase)
+  (list 'adjective-noun-phrase
+         (parse-word articles)
+         (parse-word adjectives)
+         (parse-word nouns)))
+(define (parse-noun-phrase)
+  (define (maybe-extend noun-phrase)
+    (amb noun-phrases
+         (maybe-extend (list 'noun-phrase
+                              noun-phrase
+                              (parse-prepositional-phrase)))))
+  (maybe-extend (amb (parse-simple-noun-phrase) (parse-adjective-noun-phrase))))
+
+(define (parse-simple-verb-phrase)
+  (parse-word verbs))
+(define (parse-verb-adverb-phrase)
+  (list (parse-word verbs)
+        (parse-word adverbs)))
+(define (parse-verb-phrase)
+  (define (maybe-extend verb-phrase)
+    (amb verb-phrase
+         (maybe-extend (list 'verb-phrase
+                              verb-phrase
+                              (parse-prepositional-phrase)))))
+  ;; One should try to parse the verb-adverb phrase before the simple verb phrae
+  ;; given the ordering of adverbs in relation to verbs.
+  (maybe-extend (amb (parse-verb-adverb-phrse) (parse-simple-verb-phrase))))
+
+
+;; Ex. 4.49
+(define (parse-word word-list)
+  (list (car word-list) (an-element-of (cdr word-list))))
+
+;; The last choice point will be maybe-extend in parse-noun-phrase, for which
+;; the success branch is always viable, leading to the same choice point.
+;; Thus we get infinite repetition.
