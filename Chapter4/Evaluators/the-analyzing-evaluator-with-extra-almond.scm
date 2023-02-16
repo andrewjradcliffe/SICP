@@ -64,10 +64,14 @@
           (cproc env)
           (aproc env)))))
 
+;; Before we analyze the sequence, we must scan out the defines
 (define (analyze-lambda exp)
   (let ((vars (lambda-parameters exp))
-        (bproc (analyze-sequence (lambda-body exp))))
+        (bproc (analyze-sequence (scan-out-defines (lambda-body exp)))))
     (lambda (env) (make-procedure vars bproc env))))
+
+(define (make-procedure parameters body env)
+  (list 'procedure parameters body env))
 
 (define (analyze-sequence exps)
   (define (sequentially proc1 proc2)
