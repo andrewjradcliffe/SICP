@@ -147,3 +147,22 @@
     (define a 5)
     (+ a b))
   (f 10))
+
+;; Deeper nesting
+(define (h n)
+  (define (a x)
+    (define b 2)
+    (+ x b))
+  (a n))
+
+(define (nest0)
+  (define var 1)
+  (define var 2)
+  (define (nest1)
+    (define (f x)
+      (define b (+ a x))
+      (define a 5)
+      (+ a b))
+    (f 10))
+  (nest1))
+
