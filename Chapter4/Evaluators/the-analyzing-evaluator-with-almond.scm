@@ -28,6 +28,7 @@ signifier (and fuzzy-find target) for the source of added syntax.
         ((let? exp) (analyze (let->combination exp)))
         ((let*? exp) (analyze (let*->nested-lets exp)))
         ;; Better handling of not than using implementation language primitive
+        ((not? exp) (analyze (not->if exp)))
         ;;;;;;;;;;;;;;;; end of extra syntax
         ((application? exp) (analyze-application exp))
         (else
