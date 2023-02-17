@@ -58,3 +58,60 @@ be a noun phrase followed by a verb phrase, but the article, noun and verb chose
 will span the space, and the prepositional phrase will be of random length.
 |#
 
+;; Ex. 4.51
+
+(define (permanent-assignment? exp) (tagged-list? exp 'permanent-set!))
+(define (analyze-permanent-assignment exp)
+  (let ((var (assignment-variable exp))
+        (vproc (analyze (assignment-value exp))))
+    (lambda (env succeed fail)
+      (vproc env
+             (lambda (val fail2)
+               (set-variable-value! var val env)
+               (succeed 'ok fail2))
+             fail))))
+
+;; within analyze, after regular assignment
+((permanent-assignment? exp) (analyze-permanent-assignment exp))
+
+#|
+If set! had been used instead of permanent-set!, then the values displayed
+would have been:
+(a b 1)
+(a c 1)
+|#
+
+;; Ex. 4.52
+#|
+The following implements if-fail as a syntactic transformation, but
+there are other possible approaches.
+|#
+(define (if-fail? exp) (tagged-list? exp 'if-fail))
+(define (if-fail-normal exp) (cadr exp))
+(define (if-fail-alternative exp) (caddr exp))
+(define (if-fail->amb exp) (cons 'amb (cdr exp)))
+
+;; within analyze, prior to application?
+((if-fail? exp) (analyze (if-fail->amb exp)))
+
+
+;; Ex. 4.53
+#|
+pairs, as constructed by the sequence of assignments:
+'() ----> ((3 20)) ----> ((3 110) (3 20)) ----> ((8 35) (3 110) (3 20))
+
+If if-fail is implemented as a simple syntactic transformation to amb,
+the lookup-variable-value call on the variable pairs in the environment
+constructed by the lambda of the let will find and return ((8 35) (3 110) (3 20)).
+|#
+
+;; Ex. 4.54
+(define (analyze-require exp)
+  (let ((pproc (analyze (require-predicate exp))))
+    (lambda (env succeed fail)
+      (pproc env
+             (lambda (pred-value fail2)
+               (if (not (true? pred-value)) ;; equivalent to (false? pred-value)
+                   (fail2)
+                   (succeed 'ok fail2)))
+             fail))))
