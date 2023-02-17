@@ -109,60 +109,60 @@
 
 
 ;;;;;;;;;;;;;;;; Tests
-(define the-global-environment (setup-environment))
-(define-variable! 'runtime (list 'primitive runtime) the-global-environment)
-(driver-loop)
+;; (define the-global-environment (setup-environment))
+;; (define-variable! 'runtime (list 'primitive runtime) the-global-environment)
+;; (driver-loop)
 
-(define (f x)
-  (letrec ((even?
-            (lambda (n)
-              (if (= n 0)
-                  true
-                  (odd? (- n 1)))))
-           (odd?
-            (lambda (n)
-              (if (= n 0)
-                  false
-                  (even? (- n 1))))))
-    (even? (* x 2))))
+;; (define (f x)
+;;   (letrec ((even?
+;;             (lambda (n)
+;;               (if (= n 0)
+;;                   true
+;;                   (odd? (- n 1)))))
+;;            (odd?
+;;             (lambda (n)
+;;               (if (= n 0)
+;;                   false
+;;                   (even? (- n 1))))))
+;;     (even? (* x 2))))
 
-(f 10)
+;; (f 10)
 
 
-((lambda (n)
-   (define a 1)
-   (define b 2)
-   (+ a b n))
- 10)
-(define (g n)
-  (define a 1)
-  (define b 2)
-  (+ a b n))
-(g 10)
+;; ((lambda (n)
+;;    (define a 1)
+;;    (define b 2)
+;;    (+ a b n))
+;;  10)
+;; (define (g n)
+;;   (define a 1)
+;;   (define b 2)
+;;   (+ a b n))
+;; (g 10)
 
-;; Fails as expected.
-(let ((a 1))
-  (define (f x)
-    (define b (+ a x))
-    (define a 5)
-    (+ a b))
-  (f 10))
+;; ;; Fails as expected.
+;; (let ((a 1))
+;;   (define (f x)
+;;     (define b (+ a x))
+;;     (define a 5)
+;;     (+ a b))
+;;   (f 10))
 
-;; Deeper nesting
-(define (h n)
-  (define (a x)
-    (define b 2)
-    (+ x b))
-  (a n))
+;; ;; Deeper nesting
+;; (define (h n)
+;;   (define (a x)
+;;     (define b 2)
+;;     (+ x b))
+;;   (a n))
 
-(define (nest0)
-  (define var 1)
-  (define var 2)
-  (define (nest1)
-    (define (f x)
-      (define b (+ a x))
-      (define a 5)
-      (+ a b))
-    (f 10))
-  (nest1))
+;; (define (nest0)
+;;   (define var 1)
+;;   (define var 2)
+;;   (define (nest1)
+;;     (define (f x)
+;;       (define b (+ a x))
+;;       (define a 5)
+;;       (+ a b))
+;;     (f 10))
+;;   (nest1))
 
