@@ -24,7 +24,7 @@
 
 (define (analyze-ramb exp)
   (let ((cprocs (map analyze (ramb-choices exp))))
-    (lambda (env success fail)
+    (lambda (env succeed fail)
       (define (try-next choices)
         (if (null? choices)
             (fail)
