@@ -385,7 +385,7 @@ The essential pieces, without modification.
 (define (negated-query exps) (car exps))
 
 (define (predicate exps) (car exps))
-(define (args exp) (cdr exps))
+(define (args exps) (cdr exps))
 
 (define (rule? statement)
   (tagged-list? statement 'rule))
