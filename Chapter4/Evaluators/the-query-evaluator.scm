@@ -256,7 +256,7 @@ The essential pieces, without modification.
       (get-all-assertions)))
 (define (get-all-assertions) THE-ASSERTIONS)
 (define (get-indexed-assertions pattern)
-  (get-stream (index-key-of-pattern 'assertion-stream)))
+  (get-stream (index-key-of pattern 'assertion-stream)))
 
 (define (get-stream key1 key2)
   (let ((s (get key1 key2)))
