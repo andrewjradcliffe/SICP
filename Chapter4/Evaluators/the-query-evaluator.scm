@@ -178,7 +178,7 @@ The essential pieces, without modification.
 ;;;; 4.4.4.4 Rules and Unification
 (define (apply-rules pattern frame)
   (stream-flatmap (lambda (rule)
-                    (apply-a-rule rule patten frame))
+                    (apply-a-rule rule pattern frame))
                   (fetch-rules pattern frame)))
 
 (define (apply-a-rule rule query-pattern query-frame)
@@ -256,7 +256,7 @@ The essential pieces, without modification.
       (get-all-assertions)))
 (define (get-all-assertions) THE-ASSERTIONS)
 (define (get-indexed-assertions pattern)
-  (get-stream (index-key-of pattern 'assertion-stream)))
+  (get-stream (index-key-of pattern) 'assertion-stream))
 
 (define (get-stream key1 key2)
   (let ((s (get key1 key2)))
@@ -334,7 +334,7 @@ The essential pieces, without modification.
        (stream-car s1)
        (stream-append-delayed (stream-cdr s1) delayed-s2))))
 
-(define (interleave-delayed s delayed-s2)
+(define (interleave-delayed s1 delayed-s2)
   (if (stream-null? s1)
       (force delayed-s2)
       (cons-stream
