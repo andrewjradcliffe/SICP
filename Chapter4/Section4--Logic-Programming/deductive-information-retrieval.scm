@@ -122,9 +122,14 @@ one have in hand the set of all permutations.
 ;; of inputs we might expect
 (define (lexicographic<? a b)
   (cond ((and (symbol? a) (symbol? b))
-         (string<? (symbol->string a) (symbol->string b)))
+         (symbol<? a b))
+        ((and (string? a) (string? b))
+         (string<? a b))
         ((and (number? a) (number? b))
          (< a b))
+        ((and (pair? a) (pair? b))
+         ;; (fold-left (lambda (x y) (and x y)) true (map lexicographic<? a b))
+         (lexicographic<? (car a) (car b)))
         (else
          (error "Unexpected types -- lexicographic<?" a b))))
 
