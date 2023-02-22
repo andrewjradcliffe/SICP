@@ -50,7 +50,7 @@ The essential pieces, without modification.
 
 (define (query-driver-loop)
   (prompt-for-input input-prompt)
-  (let ((q (query-syntax process (read))))
+  (let ((q (query-syntax-process (read))))
     (cond ((assertion-to-be-added? q)
            (add-rule-or-assertion! (add-assertion-body q))
            (newline)
@@ -454,3 +454,6 @@ The essential pieces, without modification.
 
 (define (extend variable value frame)
   (cons (make-binding variable value) frame))
+
+;;;;;;;;;;;;;;;; Tests
+(query-driver-loop)
