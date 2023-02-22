@@ -132,12 +132,16 @@ all the rest, the second argument against all the rest, etc.
 
 ;; The reverse of '() is '()
 (rule (reverse () ()))
-;; This works on both cases
+;; This works on (reverse (1 2 3) ?x)
 (rule (reverse (?u . ?v) ?x)
       (and (reverse ?v ?z)
            (append-to-form ?z (?u) ?x)))
 ;; Can be used to enable (reverse ?x (1 2 3)), but then two matches are produced
 ;; (rule (reverse (?x) (?x)))
+;; This works on (reverse ?x (1 2 3))
+(rule (reverse (?u . ?v) ?x)
+      (and (append-to-form ?z (?u) ?x)
+           (reverse ?v ?z)))
 
 
 ;; Ex. 4.69
