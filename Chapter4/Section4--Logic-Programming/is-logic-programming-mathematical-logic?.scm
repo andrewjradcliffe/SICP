@@ -136,6 +136,8 @@ all the rest, the second argument against all the rest, etc.
 (rule (reverse (?u . ?v) ?x)
       (and (reverse ?v ?z)
            (append-to-form ?z (?u) ?x)))
+;; Can be used to enable (reverse ?x (1 2 3)), but then two matches are produced
+;; (rule (reverse (?x) (?x)))
 
 
 ;; Ex. 4.69
