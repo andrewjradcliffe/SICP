@@ -145,17 +145,31 @@ all the rest, the second argument against all the rest, etc.
 
 
 ;; Ex. 4.69
-(rule (ends-in-grandson (grandson)))
-(rule (ends-in-grandson (?x . ?y))
-      (ends-in-grandson ?y))
+(assert! (rule (ends-in-grandson (grandson))))
+(assert! (rule (ends-in-grandson (great . ?y))
+               (ends-in-grandson ?y)))
 
 ;; In essence, for each great, we find the father and then proceed to next
 ;; having peeled one great.
-(rule ((great . ?rel) ?x ?y)
-      (and (ends-in-grandson ?rel)
-           (son-of ?x ?f)
-           (?rel ?f ?y)))
+(assert! (rule ((great . ?rel) ?x ?y)
+               (and (ends-in-grandson ?rel)
+                    (son-of ?x ?f)
+                    (?rel ?f ?y))))
 ;; To match the case without any preceding greats
-(rule ((grandson) ?g ?s)
-      (grandson-of ?g ?s))
+(assert! (rule ((grandson) ?g ?s)
+               (grandson ?g ?s)))
+#|
+The issue arises from the fact that the ends-in-grandson relationship is unbounded
+with respect to (great . ?y) -- any number of greats can be prepended onto
+the unit list (grandson), hence, we have an infinite recursion. In other words,
+with (?rel Adam Irad) we discover the specified relationship, but then proceed to
+check all possible great-derived relationships.
+It seems that we need to impose an upper bound on the search, perhaps using
+Adam as the anchor.
+|#
 
+
+((great grandson) ?g ?ggs)
+((great great great great great grandson) ?g ?ggs)
+(?rel Adam Irad)
+((great . ?rel) Adam Irad)
