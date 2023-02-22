@@ -17,7 +17,7 @@
 ;; Ex. 4.56
 
 ;; a
-(and (supervisor ?x) (Bitdiddle Ben)
+(and (supervisor ?x (Bitdiddle Ben))
      (address ?x ?y))
 
 ;; b
