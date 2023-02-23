@@ -27,8 +27,8 @@
 
 ;; c
 (and (supervisor ?person ?super)
-     (not (job ?super (computer . ?type)))
-     (job ?super ?division))
+     (job ?super ?division)
+     (not (job ?super (computer . ?type))))
 
 
 ;; Ex. 4.57
