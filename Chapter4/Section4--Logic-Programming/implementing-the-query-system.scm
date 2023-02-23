@@ -224,7 +224,10 @@ be any change in query system behavior.
    (lambda (frame2)
      (stream-flatmap
       (lambda (frame1)
-        (merge-if-compatible frame1 frame2))
+        (let ((merge-result (merge-if-compatible frame1 frame2)))
+          (if (eq? merge-result 'failed)
+              the-empty-stream
+              (singleton-stream merge-result))))
       frame-stream1))
    frame-stream2))
 
@@ -236,7 +239,7 @@ be any change in query system behavior.
            (let ((extended-frame
                   (extend-if-possible (binding-variable b) (binding-value b) frame2)))
              (if (eq? extended-frame 'failed)
-                 the-empty-stream
+                 'failed
                  (merge-if-compatible (cdr frame1) extended-frame)))))))
 
 #|
