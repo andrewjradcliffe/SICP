@@ -456,4 +456,4 @@ The essential pieces, without modification.
   (cons (make-binding variable value) frame))
 
 ;;;;;;;;;;;;;;;; Tests
-(query-driver-loop)
+;; (query-driver-loop)
