@@ -410,7 +410,7 @@ Parker                *Lorna                  **Mary Ann
 ;; Ex. 4.44
 
 
-;; Surprisingly terse compared to the version in Ex. 2.42
+;; Surprisingly terse compared to the version in Ex. 2.42; rather inefficient, however.
 (define (queens board-size)
   (define (iter positions k)
     (if (not (= k board-size))
@@ -419,7 +419,7 @@ Parker                *Lorna                  **Mary Ann
           (require (safe? k new-positions))
           (iter new-positions (+ k 1)))
         positions))
-  (iter (list empty-board) 0))
+  (iter empty-board 0))
 
 
 

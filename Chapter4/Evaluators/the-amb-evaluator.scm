@@ -338,15 +338,10 @@ almost assuredly error (but there is no guarantee!).
 (safe-or-identical? '(1 1) '(2 3))
 
 (define (safe? k positions)
-  (let ((queen (list-ref (- k 1) positions)))
+  (let ((queen (list-ref positions k)))
     (accumulate (lambda (x y) (and (safe-or-identical? queen x) y))
                 true
                 positions)))
-
-(safe? 2 '((1 1) (3 2) (2 3)))
-(safe? 2 '((1 1) (3 2) (3 3)))
-(safe? 2 '((1 1) (3 2) (1 3)))
-
 
 (define (display-queen-row k row)
   (for-each (lambda (x) (display (if (= x k) "■\t" "⋅\t"))) row)
@@ -358,7 +353,6 @@ almost assuredly error (but there is no guarantee!).
   (newline)
   (newline)
   (let ((row (car (transpose positions))))
-    ;; ((row (fold-right (lambda (x y) (cons (car x) y)) '() positions))) ;; Another way
     (for-each (lambda (k) (display-queen-row k row)) (enumerate-interval 1 (length row)))))
 
-(define ans (queens 6))
+(display-queens (queens 8))
