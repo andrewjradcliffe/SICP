@@ -244,8 +244,121 @@ almost assuredly error (but there is no guarantee!).
 (list (amb 1 2 3) (amb 'a 'b))
 (define (require p)
   (if (not p) (amb)))
+(define (an-element-of items)
+  (require (not (null? items)))
+  (amb (car items) (an-element-of (cdr items))))
+;;;; Ex. 4.35-4.37
 ;; For use with (pythagorean-triples).
 ;; Notably, the amb version (Ben) of pythagorean-triples is considerably faster
 ;; than the stream-based version.
 (define (an-integer-starting-from n)
   (amb n (an-integer-starting-from (+ n 1))))
+;;;; Ex. 4.38-4.40
+(define (memq x seq)
+  (cond ((null? seq) false)
+        ((eq? x (car seq)) true)
+        (else (memq x (cdr seq)))))
+(define (member x seq)
+  (cond ((null? seq) false)
+        ((equal? x (car seq)) true)
+        (else (memq x (cdr seq)))))
+(define (filter proc items)
+  (cond ((null? items) items)
+        ((proc (car items))
+         (cons (car items)
+               (filter proc (cdr items))))
+        (else (filter proc (cdr items)))))
+;;;; Ex. 4.43
+(define (cadr x) (car (cdr x)))
+(define (cdar x) (cdr (car x)))
+(define (cddr x) (cdr (cdr x)))
+(define (caddr x) (car (cdr (cdr x))))
+;;;; Ex. 4.44
+(define (append x y)
+  (if (null? x)
+      y
+      (cons (car x)
+            (append (cdr x) y))))
+(define (accumulate op init seq)
+  (if (null? seq)
+      init
+      (op (car seq)
+          (accumulate op init (cdr seq)))))
+(define (map proc seq)
+  (if (null? seq)
+      '()
+      (cons (proc (car seq))
+            (map proc (cdr seq)))))
+(define (for-each proc seq)
+  (if (null? seq)
+      'done
+      (begin (proc (car seq))
+             (for-each proc (cdr seq)))))
+(define (list-ref seq i)
+  (if (= i 0)
+      (car seq)
+      (list-ref (cdr seq) (- i 1))))
+(define (enumerate-interval start end)
+  (define (iter current seq)
+    (if (< current start)
+        seq
+        (iter (- current 1) (cons current seq))))
+  (iter end '()))
+(define (length seq)
+  (define (iter n s)
+    (if (null? s)
+        n
+        (iter (+ n 1) (cdr s))))
+  (iter 0 seq))
+(define (accumulate-n op init seqs)
+  (if (null? (car seqs))
+      '()
+      (cons (accumulate op init (map car seqs))
+            (accumulate-n op init (map cdr seqs)))))
+(define (transpose m)
+  (accumulate-n cons '() m))
+
+
+(define empty-board '())
+(define (adjoin-position new-row k rest-of-queens)
+  (append rest-of-queens (list (list new-row k))))
+
+(define (same-row? x y) (= (car x) (car y)))
+(define (same-col? x y) (= (cadr x) (cadr y)))
+(define (same-diagonal? x y)
+  (let ((di (- (car x) (car y)))
+        (dj (- (cadr x) (cadr y))))
+    (= (abs di) (abs dj))))
+
+(define (safe-or-identical? x y)
+  (if (equal? x y)
+      true
+      (and (not (same-row? x y)) (not (same-col? x y)) (not (same-diagonal? x y)))))
+
+(safe-or-identical? '(1 1) '(2 3))
+
+(define (safe? k positions)
+  (let ((queen (list-ref (- k 1) positions)))
+    (accumulate (lambda (x y) (and (safe-or-identical? queen x) y))
+                true
+                positions)))
+
+(safe? 2 '((1 1) (3 2) (2 3)))
+(safe? 2 '((1 1) (3 2) (3 3)))
+(safe? 2 '((1 1) (3 2) (1 3)))
+
+
+(define (display-queen-row k row)
+  (for-each (lambda (x) (display (if (= x k) "■\t" "⋅\t"))) row)
+  (newline))
+
+(define (display-queens positions)
+  (newline)
+  (display positions)
+  (newline)
+  (newline)
+  (let ((row (car (transpose positions))))
+    ;; ((row (fold-right (lambda (x y) (cons (car x) y)) '() positions))) ;; Another way
+    (for-each (lambda (k) (display-queen-row k row)) (enumerate-interval 1 (length row)))))
+
+(define ans (queens 6))
