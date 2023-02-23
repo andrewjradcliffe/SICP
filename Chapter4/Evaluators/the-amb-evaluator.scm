@@ -104,8 +104,13 @@ In essence, begin from the most advanced analyzing evaluator.
                (succeed 'ok fail2))
              fail))))
 
+;; Interestingly, scanning out internal definitions has an interesting
+;; effect here: when we go to save the old-value for an as-to-yet unassigned
+;; variable, lookup-variable-value will throw an error.
+;; This occurs only for the amb evaluator due to the need to save the old values.
+;; The options are: avoid internal definitions, or turn off errors for '*unassigned*
 (define (analyze-assignment exp)
-  (let ((var (assignment-variable))
+  (let ((var (assignment-variable exp))
         (vproc (analyze (assignment-value exp))))
     (lambda (env succeed fail)
       (vproc env
