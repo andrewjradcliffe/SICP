@@ -145,19 +145,19 @@ all the rest, the second argument against all the rest, etc.
 
 
 ;; Ex. 4.69
-(assert! (rule (ends-in-grandson (grandson))))
-(assert! (rule (ends-in-grandson (great . ?y))
-               (ends-in-grandson ?y)))
+(rule (ends-in-grandson (grandson)))
+(rule (ends-in-grandson (great . ?y))
+      (ends-in-grandson ?y))
 
 ;; In essence, for each great, we find the father and then proceed to next
 ;; having peeled one great.
-(assert! (rule ((great . ?rel) ?x ?y)
-               (and (ends-in-grandson ?rel)
-                    (son-of ?x ?f)
-                    (?rel ?f ?y))))
+(rule ((great . ?rel) ?x ?y)
+      (and (ends-in-grandson ?rel)
+           (son-of ?x ?f)
+           (?rel ?f ?y)))
 ;; To match the case without any preceding greats
-(assert! (rule ((grandson) ?g ?s)
-               (grandson ?g ?s)))
+(rule ((grandson) ?g ?s)
+      (grandson ?g ?s))
 #|
 The issue arises from the fact that the ends-in-grandson relationship is unbounded
 with respect to (great . ?y) -- any number of greats can be prepended onto
