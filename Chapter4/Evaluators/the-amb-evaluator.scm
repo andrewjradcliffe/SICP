@@ -104,11 +104,21 @@ In essence, begin from the most advanced analyzing evaluator.
                (succeed 'ok fail2))
              fail))))
 
-;; Interestingly, scanning out internal definitions has an interesting
-;; effect here: when we go to save the old-value for an as-to-yet unassigned
-;; variable, lookup-variable-value will throw an error.
-;; This occurs only for the amb evaluator due to the need to save the old values.
-;; The options are: avoid internal definitions, or turn off errors for '*unassigned*
+#|
+Interestingly, scanning out internal definitions has an interesting
+effect here: when we go to save the old-value for an as-to-yet unassigned
+variable, lookup-variable-value will throw an error.
+This occurs only for the amb evaluator due to the need to save the old values.
+The options are: avoid internal definitions, or turn off errors for '*unassigned*.
+
+After some thought, to error is the correct decision. Otherwise, it is possible
+for backtracking to lead to a variable being assigned when it should not otherwise be.
+
+A careful reading of p. 430 indicates that while the above is tight reasoning,
+variable lookup should always "succeed". Admittedly, simply storing *unassigned*
+is safe, and if one then proceeds to use it, any subsequent computation will
+almost assuredly error (but there is no guarantee!).
+|#
 (define (analyze-assignment exp)
   (let ((var (assignment-variable exp))
         (vproc (analyze (assignment-value exp))))
@@ -122,6 +132,27 @@ In essence, begin from the most advanced analyzing evaluator.
                             (set-variable-value! var old-value env)
                             (fail2)))))
              fail))))
+
+(define (lookup-variable-value var env)
+  (define (env-loop env)
+    (define (scan vars vals)
+      (cond ((null? vars)
+             (env-loop (enclosing-environment env)))
+            ((eq? var (car vars))
+             ;; (if (eq? '*unassigned* (car vals))
+             ;;     (error "Unassigned variable" var)
+             ;;     (car vals))
+             (car vals)
+             )
+            (else (scan (cdr vars) (cdr vals)))))
+    (if (eq? env the-empty-environment)
+        (error "Unbound variable" var)
+        (let ((frame (first-frame env)))
+          (scan (frame-variables frame)
+                (frame-values frame)))))
+  (env-loop env))
+
+
 
 (define (analyze-application exp)
   (let ((fproc (analyze (operator exp)))
