@@ -585,7 +585,7 @@ Since every amb is successful, (parse-word verbs) never occurs.
                               (parse-prepositional-phrase)))))
   ;; One should try to parse the verb-adverb phrase before the simple verb phrae
   ;; given the ordering of adverbs in relation to verbs.
-  (maybe-extend (amb (parse-verb-adverb-phrse) (parse-simple-verb-phrase))))
+  (maybe-extend (amb (parse-verb-adverb-phrase) (parse-simple-verb-phrase))))
 
 
 ;; Ex. 4.49
