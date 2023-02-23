@@ -557,7 +557,7 @@ Since every amb is successful, (parse-word verbs) never occurs.
 
 ;; Ex. 4.48
 (define adjectives '(adjective small medium large))
-(define adverbs ('adverb slowly rapidly))
+(define adverbs '(adverb slowly rapidly))
 
 (define (parse-adjective-noun-phrase)
   (list 'adjective-noun-phrase
