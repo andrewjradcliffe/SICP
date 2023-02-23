@@ -261,7 +261,7 @@ almost assuredly error (but there is no guarantee!).
 (define (member x seq)
   (cond ((null? seq) false)
         ((equal? x (car seq)) true)
-        (else (memq x (cdr seq)))))
+        (else (member x (cdr seq)))))
 (define (filter proc items)
   (cond ((null? items) items)
         ((proc (car items))
