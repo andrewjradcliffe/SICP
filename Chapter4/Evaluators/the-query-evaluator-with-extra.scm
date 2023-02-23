@@ -1,5 +1,5 @@
 ;; The evaluator of 4.4.4 based on a logic programming language for queries,
-;; with additions from 4.75
+;; with addition of unique special form from Ex. 4.75.
 #|
 This is a pure addition to the base query evaluator.
 |#
