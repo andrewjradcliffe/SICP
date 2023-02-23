@@ -281,10 +281,27 @@ this subtle spice.
         ;; (list 'not not) ;; this one is a bit sketchy
         (list 'newline newline)
         (list 'display display)
+        (list 'runtime runtime)
         ;; more primitives
         (list 'number? number?)
         (list 'symbol? symbol?)
-        (list 'string? string?)))
+        (list 'string? string?)
+        ;; (list 'string<? string<?)
+        ;; (list 'string>? string>?)
+        ;; (list 'string=? string=?)
+        ;; (list 'symbol<? symbol<?)
+        ;; (list 'symbol>? symbol>?)
+        ;; (list 'symbol=? symbol=?)
+        (list 'eq? eq?) ;; most reasonable definition
+        (list 'eqv? eqv?) ;; probably ok
+        (list 'equal? equal?) ;; sketchy
+        ;; math primitives
+        (list 'expt expt)
+        (list 'sqrt sqrt)
+        (list 'sin sin)
+        (list 'cos cos)
+        (list 'tan tan)
+        ))
 
 (define (primitive-procedure-names)
   (map car
