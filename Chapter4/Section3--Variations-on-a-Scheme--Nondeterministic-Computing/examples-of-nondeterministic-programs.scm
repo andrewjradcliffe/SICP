@@ -566,7 +566,7 @@ Since every amb is successful, (parse-word verbs) never occurs.
          (parse-word nouns)))
 (define (parse-noun-phrase)
   (define (maybe-extend noun-phrase)
-    (amb noun-phrases
+    (amb noun-phrase
          (maybe-extend (list 'noun-phrase
                               noun-phrase
                               (parse-prepositional-phrase)))))
