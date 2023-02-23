@@ -240,108 +240,104 @@ almost assuredly error (but there is no guarantee!).
      (driver-loop))))
 
 ;;;;;;;;;;;;;;;; Tests
-(driver-loop)
-(list (amb 1 2 3) (amb 'a 'b))
-(define (require p)
-  (if (not p) (amb)))
-(define (an-element-of items)
-  (require (not (null? items)))
-  (amb (car items) (an-element-of (cdr items))))
-;;;; Ex. 4.35-4.37
-;; For use with (pythagorean-triples).
-;; Notably, the amb version (Ben) of pythagorean-triples is considerably faster
-;; than the stream-based version.
-(define (an-integer-starting-from n)
-  (amb n (an-integer-starting-from (+ n 1))))
-(load "~/aradclif/scheme-projects/SICP/Chapter4/Evaluators/compound-procedures.scm")
-;;;; Ex. 4.44
-(define empty-board '())
-(define (adjoin-position new-row k rest-of-queens)
-  (append rest-of-queens (list (list new-row k))))
+;; (driver-loop)
+;; (list (amb 1 2 3) (amb 'a 'b))
+;; (define (require p)
+;;   (if (not p) (amb)))
+;; (define (an-element-of items)
+;;   (require (not (null? items)))
+;;   (amb (car items) (an-element-of (cdr items))))
+;; ;;;; Ex. 4.35-4.37
+;; ;; For use with (pythagorean-triples).
+;; ;; Notably, the amb version (Ben) of pythagorean-triples is considerably faster
+;; ;; than the stream-based version.
+;; (define (an-integer-starting-from n)
+;;   (amb n (an-integer-starting-from (+ n 1))))
+;; (load "~/aradclif/scheme-projects/SICP/Chapter4/Evaluators/compound-procedures.scm")
+;; ;;;; Ex. 4.44
+;; (define empty-board '())
+;; (define (adjoin-position new-row k rest-of-queens)
+;;   (append rest-of-queens (list (list new-row k))))
 
-(define (same-row? x y) (= (car x) (car y)))
-(define (same-col? x y) (= (cadr x) (cadr y)))
-(define (same-diagonal? x y)
-  (let ((di (- (car x) (car y)))
-        (dj (- (cadr x) (cadr y))))
-    (= (abs di) (abs dj))))
+;; (define (same-row? x y) (= (car x) (car y)))
+;; (define (same-col? x y) (= (cadr x) (cadr y)))
+;; (define (same-diagonal? x y)
+;;   (let ((di (- (car x) (car y)))
+;;         (dj (- (cadr x) (cadr y))))
+;;     (= (abs di) (abs dj))))
+;; (define (safe-or-identical? x y)
+;;   (if (equal? x y)
+;;       true
+;;       (and (not (same-row? x y)) (not (same-col? x y)) (not (same-diagonal? x y)))))
+;; ;; (safe-or-identical? '(1 1) '(2 3))
+;; (define (safe? k positions)
+;;   (let ((queen (list-ref positions k)))
+;;     (accumulate (lambda (x y) (and (safe-or-identical? queen x) y))
+;;                 true
+;;                 positions)))
 
-(define (safe-or-identical? x y)
-  (if (equal? x y)
-      true
-      (and (not (same-row? x y)) (not (same-col? x y)) (not (same-diagonal? x y)))))
+;; (define (display-queen-row k row)
+;;   (for-each (lambda (x) (display (if (= x k) "■\t" "⋅\t"))) row)
+;;   (newline))
+;; (define (display-queens positions)
+;;   (newline)
+;;   (display positions)
+;;   (newline)
+;;   (newline)
+;;   (let ((row (car (transpose positions))))
+;;     (for-each (lambda (k) (display-queen-row k row)) (enumerate-interval 1 (length row)))))
 
-(safe-or-identical? '(1 1) '(2 3))
+;; (display-queens (queens 8))
 
-(define (safe? k positions)
-  (let ((queen (list-ref positions k)))
-    (accumulate (lambda (x y) (and (safe-or-identical? queen x) y))
-                true
-                positions)))
+;; ;;;;;;;;;;;;;;;; Parsing natural language
+;; (define nouns '(noun student professor cat class))
+;; (define verbs '(verb studies lectures eats sleeps))
+;; (define articles '(article the a))
+;; (define prepositions '(prep for to in by with))
 
-(define (display-queen-row k row)
-  (for-each (lambda (x) (display (if (= x k) "■\t" "⋅\t"))) row)
-  (newline))
+;; (define *unparsed* '())
+;; (define (parse input)
+;;   (set! *unparsed* input)
+;;   (let ((sent (parse-sentence)))
+;;     (require (null? *unparsed*))
+;;     sent))
+;; (define (parse-word word-list)
+;;   (require (not (null? *unparsed*)))
+;;   (require (memq (car *unparsed*) (cdr word-list)))
+;;   (let ((found-word (car *unparsed*)))
+;;     (set! *unparsed* (cdr *unparsed*))
+;;     (list (car word-list) found-word)))
 
-(define (display-queens positions)
-  (newline)
-  (display positions)
-  (newline)
-  (newline)
-  (let ((row (car (transpose positions))))
-    (for-each (lambda (k) (display-queen-row k row)) (enumerate-interval 1 (length row)))))
+;; (define (parse-sentence)
+;;   (list 'sentence
+;;         (parse-noun-phrase)
+;;         (parse-verb-phrase)))
 
-(display-queens (queens 8))
+;; (define (parse-prepositional-phrase)
+;;   (list 'prep-phrase
+;;         (parse-word prepositions)
+;;         (parse-noun-phrase)))
 
-;;;;;;;;;;;;;;;; Parsing natural language
-(define nouns '(noun student professor cat class))
-(define verbs '(verb studies lectures eats sleeps))
-(define articles '(article the a))
-(define prepositions '(prep for to in by with))
+;; (define (parse-verb-phrase)
+;;   (define (maybe-extend verb-phrase)
+;;     (amb verb-phrase
+;;          (maybe-extend (list 'verb-phrase
+;;                              verb-phrase
+;;                              (parse-prepositional-phrase)))))
+;;   (maybe-extend (parse-word verbs)))
 
-(define *unparsed* '())
-(define (parse input)
-  (set! *unparsed* input)
-  (let ((sent (parse-sentence)))
-    (require (null? *unparsed*))
-    sent))
-(define (parse-word word-list)
-  (require (not (null? *unparsed*)))
-  (require (memq (car *unparsed*) (cdr word-list)))
-  (let ((found-word (car *unparsed*)))
-    (set! *unparsed* (cdr *unparsed*))
-    (list (car word-list) found-word)))
+;; (define (parse-simple-noun-phrase)
+;;   (list 'simple-noun-phrase
+;;         (parse-word articles)
+;;         (parse-word nouns)))
 
-(define (parse-sentence)
-  (list 'sentence
-        (parse-noun-phrase)
-        (parse-verb-phrase)))
-
-(define (parse-prepositional-phrase)
-  (list 'prep-phrase
-        (parse-word prepositions)
-        (parse-noun-phrase)))
-
-(define (parse-verb-phrase)
-  (define (maybe-extend verb-phrase)
-    (amb verb-phrase
-         (maybe-extend (list 'verb-phrase
-                             verb-phrase
-                             (parse-prepositional-phrase)))))
-  (maybe-extend (parse-word verbs)))
-
-(define (parse-simple-noun-phrase)
-  (list 'simple-noun-phrase
-        (parse-word articles)
-        (parse-word nouns)))
-
-(define (parse-noun-phrase)
-  (define (maybe-extend noun-phrase)
-    (amb noun-phrase
-         (maybe-extend (list 'noun-phrase
-                             noun-phrase
-                             (parse-prepositional-phrase)))))
-  (maybe-extend (parse-simple-noun-phrase)))
+;; (define (parse-noun-phrase)
+;;   (define (maybe-extend noun-phrase)
+;;     (amb noun-phrase
+;;          (maybe-extend (list 'noun-phrase
+;;                              noun-phrase
+;;                              (parse-prepositional-phrase)))))
+;;   (maybe-extend (parse-simple-noun-phrase)))
 
 
-(parse '(the professor lectures to the student in the class with the cat))
+;; (parse '(the professor lectures to the student in the class with the cat))
