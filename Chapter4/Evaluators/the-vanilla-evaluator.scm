@@ -296,6 +296,9 @@ this subtle spice.
         (list 'eqv? eqv?) ;; probably ok
         (list 'equal? equal?) ;; sketchy
         ;; math primitives
+        (list 'abs abs)
+        (list 'max 'max)
+        (list 'min 'min)
         (list 'expt expt)
         (list 'sqrt sqrt)
         (list 'sin sin)
