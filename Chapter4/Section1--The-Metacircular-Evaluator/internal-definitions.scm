@@ -219,7 +219,7 @@ is looked up, it would be found in the extra environment, rather than the enclos
 Thus, for a correct program -- in which defined variables can be evaluated without using any
 of the (other) defined variables' values -- there would be no difference.
 
-However, for an incorrect pgoram, e.g. <e1> : (* u 2) where u is a parameter in <vars>,
+However, for an incorrect program, e.g. <e1> : (* u 2) where u is a parameter in <vars>,
 there would be a difference. In the first version, this would work as u is bound in
 extended-env and has a valid valid (which is about to be overwritten). In the second version,
 u is bound, but its value (prior to (set! u <e1>)) is '*unassigned*, which will signal an
