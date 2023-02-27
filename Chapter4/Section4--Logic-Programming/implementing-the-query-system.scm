@@ -247,3 +247,55 @@ The question is: do we need to re-name variables?
 I think not, as these are appearing as part of an and, hence, the repetition of
 variable names is in fact necessary.
 |#
+
+
+;; Ex. 4.77
+#|
+One simple way is to perform the syntactic analysis and move the not or lisp-value
+to the nearest point at which the relevant variables are bound.
+|#
+
+(define (extract-varibles exp)
+  (define (tree-walk exp result)
+    (cond ((var? exp)
+           (cons exp result))
+          ((pair? exp)
+           (let ((new-result (tree-walk (car exp) result)))
+             (tree-walk (cdr exp) new-result)))
+          (else result)))
+  (tree-walk exp '()))
+
+(define (transformed-conjoin conjuncts frame-stream)
+  (conjoin (reorder conjuncts) frame-stream))
+(define (transformed-disjoin disjuncts frame-stream)
+  (disjoin (reorder disjuncts) frame-stream))
+(put 'and 'qeval transformed-conjoin)
+(put 'or 'qeval transformed-disjoin)
+
+(define (not? exp) (tagged-list? exp 'not))
+(define (lisp-value? exp) (tagged-list? exp 'lisp-value))
+(define (not-or-lisp-value? exp) (or (not? exp) (lisp-value? exp)))
+
+(define (reorder exps)
+  (let ((delayed (filter not-or-lisp-value? exps))
+        (rest (filter (lambda (x) (not (not-or-lisp-value? x))) exps)))
+    (append rest delayed)))
+
+#|
+This is a simple but inefficient way to deal with the "problem".
+Extraction and re-ordering requires a full dependency analysis
+in order to guarantee that the optimal ordering is achieved.
+It is easy to construct a better ordering than the above, but it is
+also possible for deeply nested variables to introduce suboptimal orderings;
+furthermore, nested not's / lisp-value's would need to be considered to
+truly guarantee optimality. Without dependency analysis, re-ordering based solely
+on binding order would be a bit clumsy; it would be a lot of work, the payoff of which
+really only comes if one also performs dependency analysis.
+On the other hand, the "delayed" suggestion in the text likely achieves an
+equal or better outcome with less work. Moreover, for the programmer,
+it would be a preferable mechanism as the queries-as-written would behave more/less
+transparently insofar as performance is concerned. Syntactic analysis which results
+in a re-ordering of expressions would be far from transparent to the programmer, very
+likely resulting in un-intuitive query performance (unless the programmer is made
+aware of the inherent re-ordering).
+|#
