@@ -292,10 +292,14 @@ truly guarantee optimality. Without dependency analysis, re-ordering based solel
 on binding order would be a bit clumsy; it would be a lot of work, the payoff of which
 really only comes if one also performs dependency analysis.
 On the other hand, the "delayed" suggestion in the text likely achieves an
-equal or better outcome with less work. Moreover, for the programmer,
-it would be a preferable mechanism as the queries-as-written would behave more/less
-transparently insofar as performance is concerned. Syntactic analysis which results
-in a re-ordering of expressions would be far from transparent to the programmer, very
-likely resulting in un-intuitive query performance (unless the programmer is made
-aware of the inherent re-ordering).
+equal or better outcome with less work.
+Moreover, for the programmer, it would be a preferable mechanism as the
+queries-as-written would behave more/less transparently insofar as performance
+is concerned. Syntactic analysis which results in a re-ordering of expressions
+would be far from transparent to the programmer, very likely resulting in
+un-intuitive query performance (unless the programmer is made aware of the
+inherent re-ordering).
+Perhaps most importantly, such recursive re-ordering may actually interfere with
+the programmer's intent, causing much frustration -- it is never a good idea
+to adopt semantics which bear little resemblance to syntax.
 |#
