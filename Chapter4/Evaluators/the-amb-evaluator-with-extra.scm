@@ -143,7 +143,7 @@ permanent-set!
   (let ((row (car (transpose positions))))
     (for-each (lambda (k) (display-queen-row k row)) (enumerate-interval 1 (length row)))))
 
-(display-queens (queens 8))
+;; (display-queens (queens 8))
 
 ;;;;;;;;;;;;;;;; Parsing natural language
 (define nouns '(noun student professor cat class))
