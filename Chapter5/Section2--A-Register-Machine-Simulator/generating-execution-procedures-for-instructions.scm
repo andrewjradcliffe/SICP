@@ -447,7 +447,7 @@ We then replace all occurrences of get-register with get-or-allocate-register wi
 make-assign, make-primitive-exp, make-goto, make-save, and make-restore.
 I denote this as Version 2.
 
-In both cases, versions, we modify make-machine as shown below.
+In both versions, we modify make-machine as shown below.
 |#
 ;; modified make-machine
 
