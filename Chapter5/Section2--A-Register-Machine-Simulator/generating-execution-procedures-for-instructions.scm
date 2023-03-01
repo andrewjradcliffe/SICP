@@ -262,7 +262,7 @@ would confer 𝒪(logn) time-complexity.
 As written below, unique is 𝒪(n^2) and the map and filter are each 𝒪(n).
 
 We have 4 total lists to construct, using the following procedures:
-- unique-sorted-instructions                𝒪(n^2)
+- unique-sorted-instructions                    𝒪(n^2)
 - entry-point-registers                         𝒪(n^2)
 - save-or-restore-registers                     𝒪(n^2)
 - assign-sources (used by next)                 𝒪(n^2)
