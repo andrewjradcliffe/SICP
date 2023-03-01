@@ -127,7 +127,7 @@ introduced in any of the sub-sections.
                                   (cons (make-label-entry next-inst
                                                           insts)
                                         labels))
-                              (receive (cons (make-instrunction next-inst)
+                              (receive (cons (make-instruction next-inst)
                                              insts)
                                   labels)))))))
 
