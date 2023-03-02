@@ -47,7 +47,7 @@
   (list (list '+ +) (list '< <) (list '- -)))
 
 ;; with eliminations from Ex. 5.6 and Ex. 5.11
-(define recursive-factorial-controller-text
+(define recursive-fibonacci-controller-text
   '((assign continue (label fib-done))
     fib-loop
     (test (op <) (reg n) (const 2))
