@@ -12,8 +12,8 @@
     (let ((the-ops
            (list (list 'initialize-stack
                        (lambda () (stack 'initialize)))
-                 (list 'print-instrunction-count
-                       (lambda () (print-instrunction-count)))
+                 (list 'print-instruction-count
+                       (lambda () (print-instruction-count)))
                  (list 'reset-instruction-count
                        (lambda () (reset-instruction-count!)))))
           (register-table
