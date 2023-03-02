@@ -2,7 +2,7 @@
 
 ;; Ex. 5.14
 
-(define factorial-machine
+(define recursive-factorial-machine
   (make-machine
    '(continue n val)
    (list (list '* *) (list '= =) (list '- -))
@@ -10,24 +10,24 @@
      ,@recursive-factorial-controller-text
      (perform (op print-stack-statistics)))))
 
-(define (compute-factorial n)
-  (set-register-contents! factorial-machine 'n n)
-  (start factorial-machine)
-  (get-register-contents factorial-machine 'val))
+(define (compute-recursive-factorial n)
+  (set-register-contents! recursive-factorial-machine 'n n)
+  (start recursive-factorial-machine)
+  (get-register-contents recursive-factorial-machine 'val))
 
-(define (factorial-interactive)
+(define (recursive-factorial-interactive)
   (let ((n (read)))
     (newline)
     (display "(factorial ")
     (display n)
     (display ")")
-    (let ((val (compute-factorial n)))
+    (let ((val (compute-recursive-factorial n)))
       (newline)
       (display "val = ")
       (display val)
       (newline)
       (newline)))
-  (factorial-interactive))
+  (recursive-factorial-interactive))
 
 
 ;; (define (factorial n)
@@ -40,3 +40,14 @@
 #|
 In fact, initialize-stack is not automatically called anywhere.
 However, we can use perform instructions to include it in the controller.
+
+n total-pushes maximum-depth
+2 2            2
+3 4            4
+4 6            6
+.
+.
+.
+
+2(n-1) = 2n - 2
+|#
