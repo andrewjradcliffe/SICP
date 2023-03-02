@@ -6,26 +6,9 @@
   (make-machine
    '(continue n val)
    (list (list '* *) (list '= =) (list '- -))
-   '((perform (op initialize-stack))
-     (assign continue (label fact-done))
-     fact-loop
-     (test (op =) (reg n) (const 1))
-     (branch (label base-case))
-     (save continue)
-     (save n)
-     (assign n (op -) (reg n) (const 1))
-     (assign continue (label after-fact))
-     (goto (label fact-loop))
-     after-fact
-     (restore n)
-     (restore continue)
-     (assign val (op *) (reg n) (reg val))
-     (goto (reg continue))
-     base-case
-     (assign val (const 1))
-     (goto (reg continue))
-     fact-done
-     (perform op print-stack-statistics))))
+   `((perform (op initialize-stack))
+     ,@recursive-factorial-controller-text
+     (perform (op print-stack-statistics)))))
 
 (define (compute-factorial n)
   (set-register-contents! factorial-machine 'n n)
@@ -37,9 +20,12 @@
     (newline)
     (display "(factorial ")
     (display n)
-    (display ") = ")
+    (display ")")
     (let ((val (compute-factorial n)))
+      (newline)
+      (display "val = ")
       (display val)
+      (newline)
       (newline)))
   (factorial-interactive))
 
