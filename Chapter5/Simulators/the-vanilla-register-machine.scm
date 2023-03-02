@@ -48,7 +48,8 @@ introduced in any of the sub-sections.
             ((eq? message 'pop) (pop))
             ((eq? message 'initialize) (initialize))
             (else (error "Unknown request -- STACK"
-                         message))))))
+                         message))))
+    dispatch))
 (define (pop stack)
   (stack 'pop))
 (define (push stack value)
@@ -177,7 +178,7 @@ introduced in any of the sub-sections.
          (make-save inst machine stack pc))
         ((eq? (car inst) 'restore)
          (make-restore inst machine stack pc))
-        ((eq? (car inst 'perform))
+        ((eq? (car inst) 'perform)
          (make-perform inst machine labels ops pc))
         (else (error "Unknown instruction type -- ASSEMBLE"
                      inst))))
@@ -310,7 +311,7 @@ introduced in any of the sub-sections.
 
 (define (make-operation-exp exp machine labels operations)
   (let ((op (lookup-prim (operation-exp-op exp) operations))
-        (aproc
+        (aprocs
          (map (lambda (e)
                 (make-primitive-exp e machine labels))
               (operation-exp-operands exp))))
