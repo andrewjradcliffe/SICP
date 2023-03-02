@@ -132,7 +132,7 @@ and instruction-label.
 (if trace
     (let ((text (instruction-text (car insts)))
           (label (instruction-label (car insts))))
-      (if label
+      (if (not (null? label))
           (begin
             (newline)
             (display label)))
