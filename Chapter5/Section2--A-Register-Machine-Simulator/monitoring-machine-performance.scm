@@ -53,6 +53,125 @@ n total-pushes maximum-depth
 |#
 
 
+;; Ex. 5.17
+#|
+Two versions, the first of which is very indirect, inefficient, and not extensible.
+The second version is direct, efficient and extensible (as demonstrated in Ex. 5.19).
+|#
+
+#|
+Version 1:
+Store the labels in the simulator, and during execution with trace on,
+compare equal? the cdr of labels elements to the current insts -- if a match
+is found, print the label.
+|#
+(define (match-insts insts labels)
+  (if (null? labels)
+      false
+      (let ((label (car labels)))
+        (if (equal? insts (cdr label))
+            (car label)
+            (match-insts insts cdr labels)))))
+;; Within execute with trace on:
+(let ((label (match-insts insts labels)))
+  (if label
+      (begin (newline)
+             (display label))))
+;; Within assemble's lambda
+(update-labels! machine labels)
+#|
+However, this is horribly inefficient -- one could perform the matching a single
+time, after the update-insts!, by modifying the car of each instruction.
+|#
+(define (add-labels! insts labels)
+  (let ((label (match-insts insts label))
+        (inst (car insts)))
+    (set-car! inst (cons (car inst) label))
+    (add-labels! (cdr insts) labels)))
+;; Within execute with trace on:
+(if trace
+    (let ((text-label (instruction-text (car insts))))
+      (if (cdr text-label)
+          (begin
+            (newline)
+            (display (cdr text-label))))
+      (newline)
+      (display (car text-label))))
+
+
+#|
+Version 2:
+Create the pairs of either (text . label) or (text . (label . ())) in extract-labels.
+The former is sufficient for Ex. 5.17, but the latter is preferable as it enables
+Ex. 5.19.
+Then, all that needs to be done is update the definitions of instruction-text
+and instruction-label.
+|#
+(define (instruction-text inst) (caar inst))
+(define (instruction-label inst) (cadar inst))
+(define (extract-labels text receive)
+  (if (null? text)
+      (receive '() '())
+      (extract-labels (cdr text)
+                      (lambda (insts labels)
+                        (let ((next-inst (car text)))
+                          (if (symbol? next-inst)
+                              (begin
+                                (if (not (null? insts))
+                                    (let ((first (car insts)))
+                                      (set-cdr! (cdar first) next-inst)))
+                                (receive insts
+                                    (cons (make-label-entry next-inst
+                                                            insts)
+                                          labels)))
+                              (receive (cons (make-instruction
+                                              (list next-inst '()))
+                                             insts)
+                                  labels)))))))
+;; Within execute:
+(if trace
+    (let ((text (instruction-text (car insts)))
+          (label (instruction-label (car insts))))
+      (if label
+          (begin
+            (newline)
+            (display label)))
+      (newline)
+      (display text)))
+
+;; Ex. 5.18
+(define (make-register name)
+  (let ((contents '*unassigned*)
+        (trace false))
+    (define (dispatch message)
+      (cond ((eq? message 'get) contents)
+            ((eq? message 'set)
+             (lambda (value)
+               (if trace
+                   (begin
+                     (newline)
+                     (display "register ")
+                     (display name)
+                     (newline)
+                     (display "old contents ")
+                     (display contents)
+                     (newline)
+                     (display "new contents ")
+                     (display value)))
+               (set! contents value)))
+            ((eq? message 'trace-on)
+             (set! trace true))
+            ((eq? message 'trace-off)
+             (set! trace false))
+            (else
+             (error "Unknown request -- REGISTER" message))))
+    dispatch))
+
+(define (trace-register machine reg-name on-off)
+  (if (or (eq? on-off 'trace-on) (eq? on-off 'trace-off))
+      ((get-register machine reg-name) on-off)
+      (error "Bad register trace message" on-off)))
+
 ;; Ex. 5.19
 #|
 One can build upon the labeled instructions introduced in Ex. 5.17, as they
