@@ -369,13 +369,15 @@ the others are orthogonal components.
    gcd-operations
    gcd-controller-text))
 
+(gcd-machine 'trace-on)
+(trace-register gcd-machine 'a 'trace-on)
+(trace-register gcd-machine 'b 'trace-on)
+(trace-register gcd-machine 't 'trace-on)
 (set-breakpoint gcd-machine 'test-b 4)
-
-;; (define x (extract-labels recursive-factorial-controller-text
-;;                           (lambda (insts labels)
-;;                             (update-insts! insts labels recursive-factorial-machine)
-;;                             insts)))
-;; (define x0 (cadr x))
-;; (instruction-text x0)
-;; (instruction-label x0)
-
+(set-register-contents! gcd-machine 'a 206)
+(set-register-contents! gcd-machine 'b 40)
+(get-register-contents gcd-machine 'a)
+(get-register-contents gcd-machine 'b)
+(get-register-contents gcd-machine 't)
+(start gcd-machine)
+(proceed-machine gcd-machine)
