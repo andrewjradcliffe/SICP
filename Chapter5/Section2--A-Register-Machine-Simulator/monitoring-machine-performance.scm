@@ -232,7 +232,7 @@ and instruction-label.
                               (begin
                                 (if (not (null? insts))
                                     (let ((first (car insts)))
-                                      (set-cdr! (cdar first) next-inst)))
+                                      (set-car! (cdar first) next-inst)))
                                 (receive insts
                                     (cons (make-label-entry next-inst
                                                             insts)
