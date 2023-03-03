@@ -2,7 +2,7 @@
 (load "~/aradclif/scheme-projects/SICP/Chapter5/Simulators/the-vanilla-register-machine.scm")
 (load "~/aradclif/scheme-projects/SICP/Chapter5/Simulators/example-controllers.scm")
 
-
+;; Ex. 5.16 and 5.17, combined.
 
 (define (make-new-machine)
   (let ((pc (make-register 'pc))
@@ -39,8 +39,14 @@
           (if (null? insts)
               'done
               (begin
-                (newline)
-                (display (instruction-text (car insts)))
+                (let ((text (instruction-text (car insts)))
+                      (label (instruction-label (car insts))))
+                  (if (not (null? label))
+                      (begin
+                        (newline)
+                        (display label)))
+                  (newline)
+                  (display text))
                 ((instruction-execution-proc (car insts)))
                 (execute-with-trace)))))
       (define (dispatch message)
@@ -63,7 +69,27 @@
                (set! trace false))
               (else (error "Unknown request -- MACHINE" message))))
       dispatch)))
-
+(define (instruction-text inst) (caar inst))
+(define (instruction-label inst) (cadar inst))
+(define (extract-labels text receive)
+  (if (null? text)
+      (receive '() '())
+      (extract-labels (cdr text)
+                      (lambda (insts labels)
+                        (let ((next-inst (car text)))
+                          (if (symbol? next-inst)
+                              (begin
+                                (if (not (null? insts))
+                                    (let ((first (car insts)))
+                                      (set-car! (cdar first) next-inst)))
+                                (receive insts
+                                    (cons (make-label-entry next-inst
+                                                            insts)
+                                          labels)))
+                              (receive (cons (make-instruction
+                                              (list next-inst '()))
+                                             insts)
+                                  labels)))))))
 
 ;;;;;;;;;;;;;;;; Test
 (define recursive-factorial-machine
@@ -98,3 +124,11 @@
   (recursive-factorial-interactive))
 
 (recursive-factorial-interactive)
+
+;; (define x (extract-labels recursive-factorial-controller-text
+;;                           (lambda (insts labels)
+;;                             (update-insts! insts labels recursive-factorial-machine)
+;;                             insts)))
+;; (define x0 (cadr x))
+;; (instruction-text x0)
+;; (instruction-label x0)
