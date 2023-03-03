@@ -36,7 +36,7 @@
         (set! instruction-count 0))
       (define (print-instruction-count)
         (newline)
-        (display list 'instruction-count '= instruction-count))
+        (display (list 'instruction-count '= instruction-count)))
       (define (execute)
         (let ((insts (get-contents pc)))
           (if (null? insts)

@@ -94,7 +94,7 @@ There are two possibilities:
         (set! instruction-count 0))
       (define (print-instruction-count)
         (newline)
-        (display list 'instruction-count '= instruction-count))
+        (display (list 'instruction-count '= instruction-count)))
       (define (execute)
         (let ((insts (get-contents pc)))
           (if (null? insts)
@@ -123,6 +123,10 @@ There are two possibilities:
                (print-instruction-count))
               (else (error "Unknown request -- MACHINE" message))))
       dispatch)))
+(define (print-instruction-count machine)
+  (machine 'print-instruction-count))
+(define (reset-instruction-count machine)
+  (machine 'reset-instruction-count))
 
 
 ;; Ex. 5.16
