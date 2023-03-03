@@ -433,7 +433,7 @@ instead, the distance between beginning of blocks is used.
 (define (cancel-all-breakpoints machine)
   (machine 'cancel-all-breakpoints))
 
-(define (instruction-label-part) (cdar inst))
+(define (instruction-label-part inst) (cdar inst))
 
 (define (print-breakpoint inst)
   (let ((label-part (instruction-label-part inst)))
