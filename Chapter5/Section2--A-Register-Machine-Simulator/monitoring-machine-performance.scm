@@ -423,6 +423,12 @@ instead, the distance between beginning of blocks is used.
  (cancel-all-breakpoints))
 
 ;; External methods
+(define (lookup-instructions-label insts label-name)
+  (if (null? insts)
+      false
+      (if (eq? (instruction-label (car insts)) label-name)
+          insts
+          (lookup-instructions-label (cdr insts) label-name))))
 (define (proceed-machine machine)
   (machine 'proceed))
 

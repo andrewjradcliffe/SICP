@@ -259,6 +259,13 @@ the others are orthogonal components.
   (iter 0 insts))
 (define (offset-within-block? insts n) ;; assumes that first inst has a label
   (< (- n 1) (+ (distance-to-next-label (cdr insts)) 1)))
+
+(define (lookup-instructions-label insts label-name)
+  (if (null? insts)
+      false
+      (if (eq? (instruction-label (car insts)) label-name)
+          insts
+          (lookup-instructions-label (cdr insts) label-name))))
 (define (proceed-machine machine)
   (machine 'proceed))
 
@@ -354,6 +361,15 @@ the others are orthogonal components.
   (recursive-factorial-interactive))
 
 (recursive-factorial-interactive)
+
+
+(define gcd-machine
+  (make-machine
+   gcd-registers
+   gcd-operations
+   gcd-controller-text))
+
+(set-breakpoint gcd-machine 'test-b 4)
 
 ;; (define x (extract-labels recursive-factorial-controller-text
 ;;                           (lambda (insts labels)
