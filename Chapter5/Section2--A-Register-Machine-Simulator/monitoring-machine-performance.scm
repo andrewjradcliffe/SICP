@@ -453,7 +453,7 @@ instead, the distance between beginning of blocks is used.
 
 (define (breakpoint? inst)
   (let ((label-part (instruction-label-part inst)))
-    (null? (cdr label-part))))
+    (not (null? (cdr label-part)))))
 
 (define (active-breakpoint? inst)
   (let ((label-part (instruction-label-part inst)))
