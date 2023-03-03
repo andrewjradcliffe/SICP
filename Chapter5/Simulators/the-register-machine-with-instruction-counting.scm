@@ -56,7 +56,7 @@
               ((eq? message 'increment-instruction-count)
                (increment-instruction-count!))
               ((eq? message 'reset-instruction-count)
-               (reset-instruction-count))
+               (reset-instruction-count!))
               ((eq? message 'print-instruction-count)
                (print-instruction-count))
               (else (error "Unknown request -- MACHINE" message))))
@@ -93,3 +93,5 @@
       (newline)))
   (print-instruction-count recursive-factorial-machine)
   (recursive-factorial-interactive))
+
+(recursive-factorial-interactive)
