@@ -11,11 +11,7 @@
         (instruction-count 0))
     (let ((the-ops
            (list (list 'initialize-stack
-                       (lambda () (stack 'initialize)))
-                 (list 'print-instruction-count
-                       (lambda () (print-instruction-count)))
-                 (list 'reset-instruction-count
-                       (lambda () (reset-instruction-count!)))))
+                       (lambda () (stack 'initialize)))))
           (register-table
            (list (list 'pc pc) (list 'flag flag))))
       (define (allocate-register name)
@@ -65,16 +61,17 @@
                (print-instruction-count))
               (else (error "Unknown request -- MACHINE" message))))
       dispatch)))
-
+(define (print-instruction-count machine)
+  (machine 'print-instruction-count))
+(define (reset-instruction-count machine)
+  (machine 'reset-instruction-count))
 
 ;;;;;;;;;;;;;;;; Test
 (define recursive-factorial-machine
   (make-machine
    '(continue n val)
    (list (list '* *) (list '= =) (list '- -))
-   `((perform (op reset-instruction-count))
-     ,@recursive-factorial-controller-text
-     (perform (op print-instruction-count)))))
+   `(,@recursive-factorial-controller-text)))
 
 (define (compute-recursive-factorial n)
   (set-register-contents! recursive-factorial-machine 'n n)
@@ -82,6 +79,7 @@
   (get-register-contents recursive-factorial-machine 'val))
 
 (define (recursive-factorial-interactive)
+  (reset-instruction-count recursive-factorial-machine)
   (let ((n (read)))
     (newline)
     (display "(factorial ")
@@ -93,4 +91,5 @@
       (display val)
       (newline)
       (newline)))
+  (print-instruction-count recursive-factorial-machine)
   (recursive-factorial-interactive))

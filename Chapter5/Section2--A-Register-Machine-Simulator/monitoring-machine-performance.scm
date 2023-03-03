@@ -69,11 +69,7 @@ There are two possibilities:
         (instruction-count 0))
     (let ((the-ops
            (list (list 'initialize-stack
-                       (lambda () (stack 'initialize)))
-                 (list 'print-instruction-count
-                       (lambda () (print-instruction-count)))
-                 (list 'reset-instruction-count
-                       (lambda () (reset-instruction-count!)))))
+                       (lambda () (stack 'initialize)))))
           (register-table
            (list (list 'pc pc) (list 'flag flag))))
       (define (allocate-register name)
