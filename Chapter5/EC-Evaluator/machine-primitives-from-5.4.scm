@@ -10,5 +10,4 @@
 (define (no-more-exps? seq) (null? seq))
 
 (define the-global-environment (setup-environment))
-(define (get-global-environment)
-  the-global-environment)
+(define (get-global-environment) the-global-environment)
