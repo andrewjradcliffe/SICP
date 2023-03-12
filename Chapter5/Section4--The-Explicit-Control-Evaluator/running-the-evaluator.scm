@@ -125,6 +125,70 @@ Recursive factorial     5n + 3                        32n - 16
 Iterative factorial     10                            35n + 19 + 10
 |#
 
+;; Ex. 5.28
+
+;; Ex. 5.29
+(define (fib n)
+  (if (< n 2)
+      n
+      (+ (fib (- n 1)) (fib (- n 2)))))
+(fib 1)
+(fib 2)
+(fib 3)
+(fib 4)
+(fib 5)
+(fib 6)
+
+#|
+fib    n    maximum depth    total pushes
+0      0    8                16
+1      1    8                16
+1      2    13               72
+2      3    18               128
+3      4    23               240
+5      5    28               408
+8      6    33               688
+
+|#
+
+;; a
+#|
+5n + 3
+|#
+
+;; b
+#|
+In terms of S(n-1), S(n-2) and k:
+
+S(n) = | n < 2     16
+       | n >= 2    S(n-1) + S(n-2) + k,     k = 40
+
+
+
+In terms of Fib(n+1)
+
+S(n) = aFib(n+1) + b,    a = 56, b = -40
+
+a, b can be determined from the system of equations:
+
+aFib(3) + b = S(2)
+aFib(4) + b = S(3)
+
+which, inserting values, is:
+2a + b = 72
+3a + b = 128
+row1 - row2 => a = 56, then substitute into row1 to obtain b=-40
+
+
+|#
+(define (S n)
+  (if (< n 2)
+      16
+      (+ (S (- n 1)) (S (- n 2)) 40)))
+
+(define (Sfib n)
+  (+ -40 (* 56 (fib (+ n 1)))))
+
 
 ;; Ex. 5.30
 
