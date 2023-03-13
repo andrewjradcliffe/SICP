@@ -220,7 +220,7 @@ The eceval-controller-text should be constructed with quasiquote and splicing.
     (assign continue (label ev-assignment-1))
     (goto (label eval-dispatch))))
 
-(define ev-assigment-1
+(define ev-assignment-1
   '(ev-assignment-1
     (restore continue)
     (restore env)
