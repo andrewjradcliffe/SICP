@@ -56,12 +56,17 @@
    (list 'cond? cond?)
    (list 'let? let?)
    (list 'let*? let*?)
-   (list 'not? not?)
    (list 'letrec? letrec?)
    (list 'cond->if cond->if)
    (list 'let->combination let->combination)
    (list 'let*->nested-lets let*->nested-lets)
    (list 'letrec->let letrec->let)
+   (list 'not? not?)
+   (list 'not->if not->if)
+   (list 'and? and?)
+   (list 'and->if and->if)
+   (list 'or? or?)
+   (list 'or->if or->if)
    ;; machine primitives from 5.4
    (list 'empty-arglist empty-arglist)
    (list 'adjoin-arg adjoin-arg)
@@ -84,6 +89,21 @@
 (define ev-letrec
   '(ev-letrec
     (assign exp (op letrec->let) (reg exp))
+    (goto (label eval-dispatch))))
+
+;; not : this can probably be implemented in a more nuanced way which
+;; takes advantage of branching at the machine level, rather than using a syntax transformation
+(define ev-not
+  '(ev-not
+    (assign exp (op not->if) (reg exp))
+    (goto (label eval-dispatch))))
+(define ev-and
+  '(ev-and
+    (assign exp (op and->if) (reg exp))
+    (goto (label eval-dispatch))))
+(define ev-or
+  '(ev-or
+    (assign exp (op or->if) (reg exp))
     (goto (label eval-dispatch))))
 
 (define eval-dispatch
@@ -112,6 +132,12 @@
     (branch (label ev-let*))
     (test (op letrec?) (reg exp))
     (branch (label ev-letrec))
+    (test (op not?) (reg exp))
+    (branch (label ev-not))
+    (test (op and?) (reg exp))
+    (branch (label ev-and))
+    (test (op or?) (reg exp))
+    (branch (label ev-or))
     (test (op application?) (reg exp))
     (branch (label ev-application))
     (goto (label unknown-procedure-type))))
@@ -154,6 +180,9 @@
     ,@ev-let
     ,@ev-let*
     ,@ev-letrec
+    ,@ev-not
+    ,@ev-and
+    ,@ev-or
     ))
 
 (define eceval
