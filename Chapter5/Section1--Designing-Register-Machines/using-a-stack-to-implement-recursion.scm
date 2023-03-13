@@ -16,7 +16,7 @@ See p. 191 for the data paths diagram.
  (goto (label expt-loop))
  after-expt
  (restore continue)
- (assign val (op *) (const b) (reg val))
+ (assign val (op *) (reg b) (reg val))
  (goto (reg continue))
  base-case
  (assign val (const 1))
@@ -34,7 +34,7 @@ See p. 192 for the data paths diagram.
  test-counter
  (test (op =) (reg counter) (const 0))
  (branch (label expt-iter-done))
- (assign product (op *) (const b) (reg product))
+ (assign product (op *) (reg b) (reg product))
  (assign counter (op -) (reg counter) (const 1))
  (goto (label test-counter))
  expt-iter-done)
