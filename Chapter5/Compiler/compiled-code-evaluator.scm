@@ -4,7 +4,7 @@
 Extract just the required items from the various locations.
 |#
 (load "~/aradclif/scheme-projects/SICP/Chapter5/Simulators/the-register-machine-with-stack-monitoring.scm")
-(load "~/aradclif/scheme-projects/SICP/Chapter5/Simulators/vanilla-compiler.scm")
+(load "~/aradclif/scheme-projects/SICP/Chapter5/Compiler/vanilla-compiler.scm")
 
 ;; Ensure a clean environment
 (define the-global-environment (setup-environment))
