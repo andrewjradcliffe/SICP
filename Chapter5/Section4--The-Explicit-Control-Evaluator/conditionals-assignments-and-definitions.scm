@@ -35,7 +35,9 @@
     ,@ev-let*-text
     ,@ev-letrec-text))
 
+
 ;; Ex. 5.24
+
 (define cond-as-basic-special-form
   '(ev-cond
     (assign unev (op cond-clauses) (reg exp))
