@@ -1,6 +1,10 @@
 ;; Machine with primitives for execution of compiled code
 
-(load "~/aradclif/scheme-projects/SICP/Chapter5/EC-Evaluator/the-explicit-control-evaluator-with-stack-monitoring.scm")
+#|
+Extract just the required items from the various locations.
+|#
+(load "~/aradclif/scheme-projects/SICP/Chapter5/Simulators/the-register-machine-with-stack-monitoring.scm")
+(load "~/aradclif/scheme-projects/SICP/Chapter5/Simulators/vanilla-compiler.scm")
 
 ;; Ensure a clean environment
 (define the-global-environment (setup-environment))
@@ -26,28 +30,29 @@
    (list 'define-variable! define-variable!)
    ))
 
-
-(define compiled-machine
-  (make-machine
-   all-regs
-   compiled-code-operations
-   `(
-     (perform (op initialize-stack))
-     ,@(statements
-      (begin (reset-label-counter)
-             (compile
-              '(begin
-                 (define (factorial n)
-                   (if (= n 1)
-                       1
-                       (* (factorial (- n 1)) n)))
-                 (factorial 6))
-              'val
-              'next)
-             ))
-     (perform (op print-stack-statistics))
-     )
-   ))
-(set-register-contents! compiled-machine 'env (get-global-environment))
-(start compiled-machine)
-(get-register-contents compiled-machine 'val)
+;;;;;;;;;;;;;;;;
+;; Example
+;; (define compiled-machine
+;;   (make-machine
+;;    all-regs
+;;    compiled-code-operations
+;;    `(
+;;      (perform (op initialize-stack))
+;;      ,@(statements
+;;       (begin (reset-label-counter)
+;;              (compile
+;;               '(begin
+;;                  (define (factorial n)
+;;                    (if (= n 1)
+;;                        1
+;;                        (* (factorial (- n 1)) n)))
+;;                  (factorial 6))
+;;               'val
+;;               'next)
+;;              ))
+;;      (perform (op print-stack-statistics))
+;;      )
+;;    ))
+;; (set-register-contents! compiled-machine 'env (get-global-environment))
+;; (start compiled-machine)
+;; (get-register-contents compiled-machine 'val)
