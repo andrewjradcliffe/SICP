@@ -29,13 +29,6 @@
 (test (op letrec?) (reg exp))
 (branch (label ev-letrec))
 
-(define orig
-  `(,@ev-cond-text
-    ,@ev-let-text
-    ,@ev-let*-text
-    ,@ev-letrec-text))
-
-
 ;; Ex. 5.24
 
 (define cond-as-basic-special-form

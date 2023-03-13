@@ -4,7 +4,6 @@ With stack monitoring.
 |#
 
 (load "~/aradclif/scheme-projects/SICP/Chapter5/EC-Evaluator/the-explicit-control-evaluator.scm")
-(load "~/aradclif/scheme-projects/SICP/Chapter5/EC-Evaluator/explicit-control-evaluator-controller-text-fragments.scm")
 
 (define (make-new-machine)
   (let ((pc (make-register 'pc))
@@ -90,6 +89,7 @@ With stack monitoring.
              (error "Unknown request -- STACK" message))))
     dispatch))
 
+;; Simply re-define the print-result controller-text
 (define print-result
   '(print-result
     (perform (op print-stack-statistics))
@@ -140,8 +140,8 @@ With stack monitoring.
    eceval-controller-text))
 
 ;;;;;;;;;;;;;;;; Tests
-(start eceval)
-(define (factorial-rec n)
-  (if (= n 1)
-      1
-      (* (factorial-rec (- n 1)) 1)))
+;; (start eceval)
+;; (define (factorial-rec n)
+;;   (if (= n 1)
+;;       1
+;;       (* (factorial-rec (- n 1)) 1)))
