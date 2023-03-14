@@ -105,7 +105,11 @@ n                maximum depth                number of pushes
   (start compiled-machine)
   (get-register-contents compiled-machine 'val)
   )
-
+(define (interactive-compiled-factorial-eval-with-monitoring)
+  (let ((n (read)))
+    (compiled-factorial-eval-with-monitoring n))
+  (newline)
+  (interactive-compiled-factorial-eval-with-monitoring))
 (compiled-factorial-eval-with-monitoring 1)
 (compiled-factorial-eval-with-monitoring 2)
 (compiled-factorial-eval-with-monitoring 3)
