@@ -259,3 +259,83 @@ n                maximum depth                number of pushes
      'val
      'next)))
 (print-compiled-instruction-sequence f-5.35)
+
+
+;; Ex. 5.36
+#|
+The compiler produces right-to-left evaluation order. This is determined in
+construct-arglist.
+
+A very simple way to produce left-to-right evaluation order is to remove the
+reverse from construct-arglist, thereby generating an argl which is the revserse
+of that required by the procedure, then using reverse as a primitive operation
+on the argl to fix the situation. I denote this below as Version 1.
+
+The other option remove the reverse from construct-arglist, and change the cons
+within construct-arglist to adjoint-arg; this is less invasive, and more agreeable
+from the perspective of primitive operations.
+
+Efficiency of right-to-left:     𝒪(n) cons operations (exactly n for n arguments)
+
+Efficiency of left-to-right:     𝒪(n²) cons, car, cdr, null? operations (yes, 𝒪(n²) for each!)
+
+Breakdown of left-to-right
+__________________________
+
+1 list operation
+n - 1 adjoin-arg operations    =>    n - 1 list operations    =>     n - 1 cons
+                                     n - 1 append operations  =>     see below
+
+(define (append seq1 seq2)
+  (if (null? seq1)
+      seq1
+      (cons (car seq1)
+            (append (cdr seq1) seq2))))
+
+
+if-predicate: 1 null?
+if-consequent: nothing
+if-alternative: 1 cons, 1 car, 1 cdr
+
+Given seq1 of length n:    n + 1 null?
+                           n cons
+                           n car
+                           n cdr
+
+Thus, we have:
+cons, car, cdr    =>    ∑ᵢ₌₁ⁿ⁻¹ i
+null?             =>    ∑ᵢ₌₁ⁿ⁻¹ i+1
+
+Recall that: ∑ᵢ₌₁ⁿ⁻¹ i = n * (n + 1) / 2
+
+∴
+append:                    (n - 1) * n / 2                 cons, car, cdr
+                           (n - 1) * n / 2 + n - 1         null?
+list within adjoin-arg:    n - 1                           cons
+list for first arg:        1                               cons
+
+Hence, 𝒪(n²) complexity for both time and space.
+
+The efficiency of the code that constructs argument lists suffers tremendously --
+now, rather than being linear in the number of arguments, it is quadratic.
+Thus, code that has a greater number of arguments per procedure will be
+exponentially slower.
+|#
+
+;; Version 1
+(define (code-to-get-rest-args operand-codes)
+  (let ((code-for-next-arg
+         (preserving '(argl)
+                     (car operand-codes)
+                     (make-instruction-sequence '(val argl) '(argl)
+                                                ((assign argl
+                                                         (op cons) (reg val) (reg argl)))))))
+    (if (null? (cdr operand-codes))
+        (append-instruction-sequences
+         code-for-next-arg
+         (make-instruction-sequence '(argl) '(argl)
+                                    '((assign argl
+                                              (op reverse) (reg argl)))))
+        (preserving '(env)
+                    code-for-next-arg
+                    (code-to-get-rest-args (cdr operand-codes))))))
