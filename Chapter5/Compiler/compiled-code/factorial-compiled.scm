@@ -71,6 +71,7 @@ after-call9    ; val now contains result of (factorial (- n 1))
   (assign argl (op cons) (reg val) (reg argl))
   (restore proc)    ; restore *
   (restore continue)
+;; apply * and return its value
   (test (op primitive-procedure?) (reg proc))
   (branch (label primitive-branch14))
 compiled-branch13

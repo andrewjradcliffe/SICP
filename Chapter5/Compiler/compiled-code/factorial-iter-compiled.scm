@@ -78,7 +78,7 @@ after-call11    ; val now contains (* counter product)
   (restore argl)
   (assign argl (op cons) (reg val) (reg argl))
   (restore proc)
-  (restore continue)
+  (restore continue)    ; at this point, we have nothing on the stack
   (test (op primitive-procedure?) (reg proc))
   (branch (label primitive-branch19))
 compiled-branch18
@@ -94,14 +94,17 @@ after-lambda6
 ;; assign the procedure to the variable iter
   (perform (op define-variable!) (const iter) (reg val) (reg env))
   (assign val (const ok))
+;; build up initial argl: (1 1)
   (assign proc (op lookup-variable-value) (const iter) (reg env))
   (assign val (const 1))
   (assign argl (op list) (reg val))
   (assign val (const 1))
   (assign argl (op cons) (reg val) (reg argl))
+;; apply iter
   (test (op primitive-procedure?) (reg proc))
   (branch (label primitive-branch5))
 compiled-branch4
+;; will jump to entry7
   (assign val (op compiled-procedure-entry) (reg proc))
   (goto (reg val))
 primitive-branch5

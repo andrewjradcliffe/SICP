@@ -160,13 +160,26 @@ point of the next call. When we jump, there is no state to store other than
 that already contained in argl.
 
 On the other hand, the recursive code builds up a stack which contains partial
-evaluations of procedures, ending the build-up only when we reach the bottom.
+evaluations of procedures, ending the build-up only when it reaches the bottom.
 
 In essence, the iterative procedure never needs to save a partial evaluation --
 it always evaluates to completion, hence, there is no need to store state associated
-with an evaluation.
+with an evaluation-in-progress.
+
+The stack is used only to store the temporaries necessary for preservation of
+the procedure, environment and continue during
+the evaluation of (+ counter 1) and (* counter product) -- which requires that
+we keep argl containing (+ counter 1) on the stack temporarily.
+When we enter the next call of iter, we have nothing on the stack. Thus,
+we can view this as a process which adds things to the stack (up to a maximum of 3),
+then clears the stack prior to proceeding.
+
+In contrast, the recursive factorial does not clear the stack prior to entering
+the next factorial call (it cannot due to the need to save continue, env and argl
+from the preceding call).
+
 |#
-( factorial-iter
+(define factorial-iter
   (begin (reset-label-counter)
          (compile
           '(define (factorial n)
@@ -231,3 +244,6 @@ n                maximum depth                number of pushes
 (compiled-factorial-iter-eval-with-monitoring 4)
 (compiled-factorial-iter-eval-with-monitoring 5)
 (compiled-factorial-iter-eval-with-monitoring 6)
+
+
+;; Ex. 5.35
