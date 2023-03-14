@@ -360,3 +360,81 @@ exponentially slower.
                              (statements seq1)
                              `((restore ,first-reg))))
                     seq2))))
+
+
+;; Ex. 5.38
+
+;; a
+(define (spread-arguments operands-list)
+  (let ((op-code-2
+         (append-instruction-sequences
+          (compile (cadr operands-list) 'val 'next)
+          (make-instruction-sequence '(val) '(arg2)
+                                     '((assign arg2 (reg val)))))))
+    (preserving '(env)
+                op-code-2
+                (preserving '(arg2)
+                            (compile (car operands-list) 'val 'next)
+                            (make-instruction-sequence '(val) '(arg1)
+                                                       '((assign arg1 (reg val))))))))
+
+;; b
+
+(define (compile-open-code exp target linkage)
+  (let ((argument-code (spread-arguments (operands exp)))
+        (op (operator exp)))
+    (preserving '(env continue)
+                argument-code
+                (end-with-linkage linkage
+                                  (make-instruction-sequence '(arg1 arg2) (list target)
+                                                             `((assign ,target
+                                                                       (op ,op)
+                                                                       (reg arg1)
+                                                                       (reg arg2))))))))
+
+(define (application-open-code? exp)
+  (if (pair? exp)
+      (let ((op (car exp)))
+        (or (eq? op '+) (eq? op '-) (eq? op '*) (eq? op '=)))
+      false))
+
+;; within compile, prior to application?
+((application-open-code? exp)
+ (compile-open-code exp target linkage))
+
+
+;; c
+(load "~/aradclif/scheme-projects/SICP/Chapter5/Compiler/compiler-with-ex.5.38.scm")
+(define (compiled-factorial-eval-with-monitoring n)
+  (define compiled-machine
+    (make-machine
+     `(,@all-regs arg1 arg2)
+     compiled-code-operations
+     `(
+       (perform (op initialize-stack))
+       ,@(statements
+          (begin (reset-label-counter)
+                 (compile
+                  `(begin
+                     (define (factorial n)
+                       (if (= n 1)
+                           1
+                           (* (factorial (- n 1)) n)))
+                     (factorial ,n))
+                  'val
+                  'next)
+                 ))
+       (perform (op print-stack-statistics))
+       )
+     ))
+  (define the-global-environment (setup-environment))
+  (define (get-global-environment) the-global-environment)
+  (set-register-contents! compiled-machine 'env (get-global-environment))
+  (start compiled-machine)
+  (get-register-contents compiled-machine 'val)
+  )
+(define (interactive-compiled-factorial-eval-with-monitoring)
+  (let ((n (read)))
+    (compiled-factorial-eval-with-monitoring n))
+  (newline)
+  (interactive-compiled-factorial-eval-with-monitoring))
