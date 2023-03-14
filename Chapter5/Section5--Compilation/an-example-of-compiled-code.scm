@@ -247,3 +247,12 @@ n                maximum depth                number of pushes
 
 
 ;; Ex. 5.35
+(define f-5.35
+  (begin
+    (set! label-counter 14)
+    (compile
+     '(define (f x)
+        (+ x (g (+ x 2))))
+     'val
+     'next)))
+(print-compiled-instruction-sequence f-5.35)
