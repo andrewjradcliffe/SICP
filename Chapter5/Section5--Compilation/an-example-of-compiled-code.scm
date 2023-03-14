@@ -147,3 +147,87 @@ n                maximum depth                number of pushes
 (compiled-factorial-alt-eval-with-monitoring 5)
 (compiled-factorial-alt-eval-with-monitoring 6)
 
+
+
+;; Ex. 5.34
+#|
+Mechanism of action
+
+The difference between the recursive and iterative code is that
+the iterative code stores its essential state in argl -- which we can think of
+as two registers that are continuously re-used -- then simply jumps to the entry
+point of the next call. When we jump, there is no state to store other than
+that already contained in argl.
+
+On the other hand, the recursive code builds up a stack which contains partial
+evaluations of procedures, ending the build-up only when we reach the bottom.
+
+In essence, the iterative procedure never needs to save a partial evaluation --
+it always evaluates to completion, hence, there is no need to store state associated
+with an evaluation.
+|#
+( factorial-iter
+  (begin (reset-label-counter)
+         (compile
+          '(define (factorial n)
+             (define (iter product counter)
+               (if (> counter n)
+                   product
+                   (iter (* counter product)
+                         (+ counter 1))))
+             (iter 1 1))
+          'val
+          'next)))
+(print-compiled-instruction-sequence factorial-iter)
+
+;; Efficiency of execution
+#|
+factorial-iter
+_____________
+
+n                maximum depth                number of pushes
+1                3                            8
+2                3                            14
+3                3                            20
+4                3                            26
+5                3                            32
+6                3                            38
+
+|#
+(define (compiled-factorial-iter-eval-with-monitoring n)
+  (define compiled-machine
+    (make-machine
+     all-regs
+     compiled-code-operations
+     `(
+       (perform (op initialize-stack))
+       ,@(statements
+          (begin (reset-label-counter)
+                 (compile
+                  `(begin
+                     (define (factorial n)
+                       (define (iter product counter)
+                         (if (> counter n)
+                             product
+                             (iter (* counter product)
+                                   (+ counter 1))))
+                       (iter 1 1))
+                     (factorial ,n))
+                  'val
+                  'next)))
+       (perform (op print-stack-statistics))
+       )
+     ))
+  (define the-global-environment (setup-environment))
+  (define (get-global-environment) the-global-environment)
+  (set-register-contents! compiled-machine 'env (get-global-environment))
+  (start compiled-machine)
+  (get-register-contents compiled-machine 'val)
+  )
+
+(compiled-factorial-iter-eval-with-monitoring 1)
+(compiled-factorial-iter-eval-with-monitoring 2)
+(compiled-factorial-iter-eval-with-monitoring 3)
+(compiled-factorial-iter-eval-with-monitoring 4)
+(compiled-factorial-iter-eval-with-monitoring 5)
+(compiled-factorial-iter-eval-with-monitoring 6)
