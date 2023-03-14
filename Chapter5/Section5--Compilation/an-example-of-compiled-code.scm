@@ -50,6 +50,9 @@ we go directly to a variable lookup, which can simply be cons'd onto the existin
 As demonstrated below, there is no difference in efficiency in terms of
 maximum depth and number of pushes.
 
+formula for maximum depth: 3(n-1) + 2
+formula for number of pushes: 6(n-1) + 2
+
 factorial
 _________
 
