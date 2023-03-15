@@ -95,3 +95,29 @@ Strictly for test of Ex. 5.38
          (compile-application exp target linkage))
         (else
          (error "Unknown expression type -- COMPILE" exp))))
+
+;; in addition to the standard machine primitives, we now need to expose the
+;; primitives we plan to open-code
+(define compiled-code-operations
+  (list
+   ;; machine primitives from Scheme
+   (list 'cons cons)
+   (list 'list list)
+   (list '+ +)
+   (list '- -)
+   (list '* *)
+   (list '= =)
+   ;; truth
+   (list 'true? true?)
+   (list 'false? false?)
+   ;; environment operations
+   (list 'lookup-variable-value lookup-variable-value)
+   (list 'primitive-procedure? primitive-procedure?)
+   (list 'make-compiled-procedure make-compiled-procedure)
+   (list 'compiled-procedure-entry compiled-procedure-entry)
+   (list 'compiled-procedure-env compiled-procedure-env)
+   (list 'extend-environment extend-environment)
+   (list 'apply-primitive-procedure apply-primitive-procedure)
+   (list 'set-variable-value! set-variable-value!)
+   (list 'define-variable! define-variable!)
+   ))
