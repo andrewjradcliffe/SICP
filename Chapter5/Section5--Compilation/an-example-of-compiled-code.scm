@@ -364,6 +364,9 @@ exponentially slower.
 
 ;; Ex. 5.38
 
+;; all-regs should be re-defined to include arg1, arg2
+(define all-regs '(env proc val argl continue arg1 arg2))
+
 ;; a
 (define (spread-arguments operands-list)
   (let ((op-code-2
@@ -375,7 +378,7 @@ exponentially slower.
                 op-code-2
                 (preserving '(arg2)
                             (compile (car operands-list) 'val 'next)
-                            (make-instruction-sequence '(val) '(arg1)
+                            (make-instruction-sequence '(val arg2) '(arg1)
                                                        '((assign arg1 (reg val))))))))
 
 ;; b
@@ -404,11 +407,25 @@ exponentially slower.
 
 
 ;; c
+#|
+factorial -- with open-coding of primitives
+_________
+
+n                maximum depth                number of pushes
+1                0                            0
+2                2                            2
+3                4                            4
+4                6                            6
+5                8                            8
+6                10                           10
+
+Dramatic increase in efficiency.
+|#
 (load "~/aradclif/scheme-projects/SICP/Chapter5/Compiler/compiler-with-ex.5.38.scm")
 (define (compiled-factorial-eval-with-monitoring n)
   (define compiled-machine
     (make-machine
-     `(,@all-regs arg1 arg2)
+     all-regs
      compiled-code-operations
      `(
        (perform (op initialize-stack))

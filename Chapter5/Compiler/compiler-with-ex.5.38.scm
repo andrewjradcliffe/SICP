@@ -11,28 +11,31 @@ Strictly for test of Ex. 5.38
 
 ;; Ex. 5.38
 
+;; all-regs should be re-defined to include arg1, arg2
+(define all-regs '(env proc val argl continue arg1 arg2))
+
 ;; a
 (define (spread-arguments operands-list)
   (let ((op-code-2
-         (preserving '(arg1)
+         (append-instruction-sequences
           (compile (cadr operands-list) 'val 'next)
           (make-instruction-sequence '(val) '(arg2)
                                      '((assign arg2 (reg val)))))))
-    (preserving '(env arg1)
+    (preserving '(env)
                 op-code-2
-                (preserving '(env arg2)
+                (preserving '(arg2)
                             (compile (car operands-list) 'val 'next)
-                            (make-instruction-sequence '(val) '(arg1)
+                            (make-instruction-sequence '(val arg2) '(arg1)
                                                        '((assign arg1 (reg val))))))))
 
-(define (spread-arguments operands-list)
-  (let ((op-code-2
-         (compile (cadr operands-list) 'arg2 'next))
-        (op-code-1
-         (compile (car operands-list) 'arg1 'next)))
-    (preserving '(env val arg2)
-                op-code-1
-                op-code-2)))
+;; (define (spread-arguments operands-list)
+;;   (let ((op-code-2
+;;          (compile (cadr operands-list) 'arg2 'next))
+;;         (op-code-1
+;;          (compile (car operands-list) 'arg1 'next)))
+;;     (preserving '(env val arg2)
+;;                 op-code-1
+;;                 op-code-2)))
 
 ;; (define (spread-arguments operands-list)
 ;;   (let ((op-code-1
