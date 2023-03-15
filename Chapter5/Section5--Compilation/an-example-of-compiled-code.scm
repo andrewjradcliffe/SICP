@@ -451,7 +451,71 @@ Dramatic increase in efficiency.
   (get-register-contents compiled-machine 'val)
   )
 (define (interactive-compiled-factorial-eval-with-monitoring)
+  (display ";;; enter n")
+  (newline)
   (let ((n (read)))
-    (compiled-factorial-eval-with-monitoring n))
+    (let ((result (compiled-factorial-eval-with-monitoring n)))
+      (newline)
+      (display "factorial of ")
+      (display n)
+      (display " = ")
+      (display result)))
   (newline)
   (interactive-compiled-factorial-eval-with-monitoring))
+
+;; A useful tester
+(define (compiled-multi-adder-with-monitoring adder-exp a b c d)
+  (define compiled-machine
+    (make-machine
+     all-regs
+     compiled-code-operations
+     `(
+       (perform (op initialize-stack))
+       ,@(statements
+          (begin (reset-label-counter)
+                 (compile
+                  `(begin
+                     (define (multi-adder a b c d)
+                       ,adder-exp)
+                     (multi-adder ,a ,b ,c ,d))
+                  'val
+                  'next)
+                 ))
+       (perform (op print-stack-statistics))
+       )
+     ))
+  (define the-global-environment (setup-environment))
+  (define (get-global-environment) the-global-environment)
+  (set-register-contents! compiled-machine 'env (get-global-environment))
+  (start compiled-machine)
+  (get-register-contents compiled-machine 'val))
+(define (interactive-compiled-multi-adder-with-monitoring adder-exp)
+  (display ";;; enter (a b c d)")
+  (newline)
+  (let ((abcd (read)))
+    (let ((a (car abcd))
+          (b (cadr abcd))
+          (c (caddr abcd))
+          (d (cadddr abcd)))
+      (let ((result (compiled-multi-adder-with-monitoring adder-exp a b c d)))
+        (newline)
+        (display "result = ")
+        (display result))))
+  (newline)
+  (interactive-compiled-multi-adder-with-monitoring adder-exp))
+(define right-to-left '(+ a (+ b (+ c d))))
+(define left-to-right '(+ (+ (+ a b) c) d))
+(define mixed '(+ (+ a b) (+ c d)))
+
+(define (print-multi-adder-assembly adder-exp)
+  (define multi-adder
+    (begin (reset-label-counter)
+           (compile
+            `(define (multi-adder a b c d)
+               ,adder-exp)
+            'val
+            'next)))
+  (print-compiled-instruction-sequence multi-adder))
+(print-multi-adder-assembly right-to-left)
+(print-multi-adder-assembly left-to-right)
+(print-multi-adder-assembly mixed)
