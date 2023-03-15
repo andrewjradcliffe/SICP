@@ -368,18 +368,30 @@ exponentially slower.
 (define all-regs '(env proc val argl continue arg1 arg2))
 
 ;; a
+;; (define (spread-arguments operands-list)
+;;   (let ((op-code-2
+;;          (append-instruction-sequences
+;;           (compile (cadr operands-list) 'val 'next)
+;;           (make-instruction-sequence '(val) '(arg2)
+;;                                      '((assign arg2 (reg val)))))))
+;;     (preserving '(env)
+;;                 op-code-2
+;;                 (preserving '(arg2)
+;;                             (compile (car operands-list) 'val 'next)
+;;                             (make-instruction-sequence '(val arg2) '(arg1)
+;;                                                        '((assign arg1 (reg val))))))))
+
+;; In fact, this can be made more succinct by eliminating the unnecessary
+;; assignments to val, followed by assignment to arg1 or arg2
 (define (spread-arguments operands-list)
-  (let ((op-code-2
-         (append-instruction-sequences
-          (compile (cadr operands-list) 'val 'next)
-          (make-instruction-sequence '(val) '(arg2)
-                                     '((assign arg2 (reg val)))))))
+  (let ((op-code-2 (compile (cadr operands-list) 'arg2 'next)))
     (preserving '(env)
                 op-code-2
                 (preserving '(arg2)
-                            (compile (car operands-list) 'val 'next)
-                            (make-instruction-sequence '(val arg2) '(arg1)
-                                                       '((assign arg1 (reg val))))))))
+                            (compile (car operands-list) 'arg1 'next)
+                            (make-instruction-sequence '(arg2) '()
+                                                       '())))))
+
 
 ;; b
 
@@ -520,6 +532,62 @@ Dramatic increase in efficiency.
 (print-multi-adder-assembly right-to-left)
 (print-multi-adder-assembly left-to-right)
 (print-multi-adder-assembly mixed)
+
+
+;; Another useful tester; multiple compiled procedure calls prior to completion
+;; of an open-coded primitive (+).
+(define (compiled-fib-eval-with-monitoring n)
+  (define compiled-machine
+    (make-machine
+     all-regs
+     compiled-code-operations
+     `(
+       (perform (op initialize-stack))
+       ,@(statements
+          (begin (reset-label-counter)
+                 (compile
+                  `(begin
+                     (define (fib n)
+                       (if (< n 2)
+                           n
+                           (+ (fib (- n 1)) (fib (- n 2)))))
+                     (fib ,n))
+                  'val
+                  'next)
+                 ))
+       (perform (op print-stack-statistics))
+       )
+     ))
+  (define the-global-environment (setup-environment))
+  (define (get-global-environment) the-global-environment)
+  (set-register-contents! compiled-machine 'env (get-global-environment))
+  (start compiled-machine)
+  (get-register-contents compiled-machine 'val)
+  )
+(define (interactive-compiled-fib-eval-with-monitoring)
+  (display ";;; enter n")
+  (newline)
+  (let ((n (read)))
+    (let ((result (compiled-fib-eval-with-monitoring n)))
+      (newline)
+      (display "fib of ")
+      (display n)
+      (display " = ")
+      (display result)))
+  (newline)
+  (interactive-compiled-fib-eval-with-monitoring))
+(define fib-tester
+  (begin (reset-label-counter)
+         (compile
+          '(define (fib n)
+             (if (< n 2)
+                 n
+                 (+ (fib (- n 1)) (fib (- n 2)))))
+          'val
+          'next)))
+(print-compiled-instruction-sequence fib-tester)
+
+
 
 
 ;; d

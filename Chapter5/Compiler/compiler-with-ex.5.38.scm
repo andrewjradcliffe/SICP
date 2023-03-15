@@ -15,18 +15,30 @@ Strictly for test of Ex. 5.38
 (define all-regs '(env proc val argl continue arg1 arg2))
 
 ;; a
+;; (define (spread-arguments operands-list)
+;;   (let ((op-code-2
+;;          (append-instruction-sequences
+;;           (compile (cadr operands-list) 'val 'next)
+;;           (make-instruction-sequence '(val) '(arg2)
+;;                                      '((assign arg2 (reg val)))))))
+;;     (preserving '(env)
+;;                 op-code-2
+;;                 (preserving '(arg2)
+;;                             (compile (car operands-list) 'val 'next)
+;;                             (make-instruction-sequence '(val arg2) '(arg1)
+;;                                                        '((assign arg1 (reg val))))))))
+
+;; In fact, this can be made more succinct by eliminating the unnecessary
+;; assignments to val, followed by assignment to arg1 or arg2
 (define (spread-arguments operands-list)
-  (let ((op-code-2
-         (append-instruction-sequences
-          (compile (cadr operands-list) 'val 'next)
-          (make-instruction-sequence '(val) '(arg2)
-                                     '((assign arg2 (reg val)))))))
+  (let ((op-code-2 (compile (cadr operands-list) 'arg2 'next)))
     (preserving '(env)
                 op-code-2
                 (preserving '(arg2)
-                            (compile (car operands-list) 'val 'next)
-                            (make-instruction-sequence '(val arg2) '(arg1)
-                                                       '((assign arg1 (reg val))))))))
+                            (compile (car operands-list) 'arg1 'next)
+                            (make-instruction-sequence '(arg2) '()
+                                                       '())))))
+
 
 ;; b
 
