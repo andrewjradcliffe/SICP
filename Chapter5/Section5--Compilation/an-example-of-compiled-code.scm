@@ -506,6 +506,7 @@ Dramatic increase in efficiency.
 (define right-to-left '(+ a (+ b (+ c d))))
 (define left-to-right '(+ (+ (+ a b) c) d))
 (define mixed '(+ (+ a b) (+ c d)))
+(define nested '(+ (+ (+ a (+ a (+ b (+ c d)))) c) d))
 
 (define (print-multi-adder-assembly adder-exp)
   (define multi-adder
@@ -519,3 +520,87 @@ Dramatic increase in efficiency.
 (print-multi-adder-assembly right-to-left)
 (print-multi-adder-assembly left-to-right)
 (print-multi-adder-assembly mixed)
+
+
+;; d
+#|
+There are two approaches: construct directly (denoted as Version 1), or,
+a syntactic transformation (denoted as Version 2).
+
+Version 2 seems to have a disadvantage -- it should incur more stack allocations
+than Version 1.
+|#
+(define (application-open-code-varargs? exp)
+  (if (pair? exp)
+      (let ((op (car exp)))
+        (and (or (eq? op '+) (eq? op '*))
+             (> (length (operands exp)) 2)))
+      false))
+
+
+
+;; Version 1
+(define (spread-var-arguments op operands-list)
+  (let ((operands-list (reverse operands-list)))
+    (let ((last-code
+           (append-instruction-sequences
+            (compile (car operands-list) 'val 'next)
+            (make-instruction-sequence '(val) '(arg2)
+                                       '((assign arg1 (reg val)))))))
+      (preserving '(env)
+                  last-code
+                  (spread-rest-args op (cdr operands-list))))))
+
+(define (spread-rest-args op operands-list)
+  (let ((op-code-1
+         (preserving '(arg2)
+                     (compile (car operands-list) 'val 'next)
+                     (make-instruction-sequence '(val arg2) '(arg1)
+                                                '((assign arg1 (reg val)))))))
+    (if (null? (cdr operands-list))
+        (append-instruction-sequences
+         op-code-1
+         (make-instruction-sequence '(arg1 arg2) '(val)
+                                    `((assign val (op ,op) (reg arg1) (reg arg2)))))
+        (preserving '(env)
+                    (append-instruction-sequences
+                     op-code-1
+                     (make-instruction-sequence '(arg1 arg2) '(arg2)
+                                                `((assign arg2 (op ,op) (reg arg1) (reg arg2)))))
+                    (spread-rest-args op (cdr operands-list))))))
+
+(define (compile-open-code-varargs exp target linkage)
+  (let ((op (operator exp)))
+    (let ((argument-code (spread-var-arguments op (operands exp))))
+      (preserving '(env continue)
+                  argument-code
+                  (end-with-linkage linkage
+                                    (make-instruction-sequence '(val) (list target)
+                                                               `((assign ,target (reg val)))))
+                  ;; Or, a smarter ending:
+                  ;; (if (eq? target 'val)
+                  ;;     (end-with-linkage linkage (empty-instruction-sequence))
+                  ;;     (end-with-linkage linkage
+                  ;;                       (make-instruction-sequence '(val) (list target)
+                  ;;                                                  `((assign ,target (reg val))))))
+                  ))))
+;; within compile, prior to application-open-code?
+((application-open-code-varargs? exp)
+ (compile-open-code-varargs exp target linkage))
+
+
+;; Version 2
+(define (op-varargs->nested-2-arg exp)
+  (let ((op (operator exp))
+        (operands-list (operands exp)))
+    (define (iter operands-list)
+      (if (= (length operands-list) 2)
+          (cons op operands-list)
+          (list op
+                (car operands-list)
+                (iter (cdr operands-list)))))
+    (iter operands-list)))
+
+;; within compile, prior to application-open-code?
+((application-open-code-varargs? exp)
+ (compile (op-varargs->nested-2-arg exp) target linkage))
