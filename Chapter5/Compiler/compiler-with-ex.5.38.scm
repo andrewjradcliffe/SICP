@@ -28,30 +28,6 @@ Strictly for test of Ex. 5.38
                             (make-instruction-sequence '(val arg2) '(arg1)
                                                        '((assign arg1 (reg val))))))))
 
-;; (define (spread-arguments operands-list)
-;;   (let ((op-code-2
-;;          (compile (cadr operands-list) 'arg2 'next))
-;;         (op-code-1
-;;          (compile (car operands-list) 'arg1 'next)))
-;;     (preserving '(env val arg2)
-;;                 op-code-1
-;;                 op-code-2)))
-
-;; (define (spread-arguments operands-list)
-;;   (let ((op-code-1
-;;          (append-instruction-sequences
-;;           (compile (car operands-list 'val 'next))
-;;           (make-instruction-sequence '(val) '(arg1)
-;;                                      '((assign arg1 (reg val))))))
-;;         (op-code-2
-;;          (append-instruction-sequences
-;;           (compile (car operands-list 'val 'next))
-;;           (make-instruction-sequence '(val) '(arg2)
-;;                                      '((assign arg2 (reg val)))))))
-;;     (preserving '(env arg2)
-;;                 op-code-2
-;;                 op-code1)))
-
 ;; b
 
 (define (compile-open-code exp target linkage)
