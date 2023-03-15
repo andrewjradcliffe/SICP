@@ -4,27 +4,50 @@ Strictly for test of Ex. 5.38
 |#
 
 ;; Under normal circumstances, one would load just the compiler, but we also need a
-;; machine simulator, hence, we simply load the compiled code evaluator
-;; (which includes the vanilla compiler).
-;; (load "~/aradclif/scheme-projects/SICP/Chapter5/Compiler/vanilla-compiler.scm")
-(load "~/aradclif/scheme-projects/SICP/Chapter5/Compiler/compiled-code-evaluator.scm")
-
+;; machine simulator. As the machine primitives differ from the compiled-code-evaluator
+;; without open-coded primitives, we just re-define things here.
+(load "~/aradclif/scheme-projects/SICP/Chapter5/Simulators/the-register-machine-with-stack-monitoring.scm")
+(load "~/aradclif/scheme-projects/SICP/Chapter5/Compiler/vanilla-compiler.scm")
 
 ;; Ex. 5.38
 
 ;; a
 (define (spread-arguments operands-list)
   (let ((op-code-2
-         (append-instruction-sequences
+         (preserving '(arg1)
           (compile (cadr operands-list) 'val 'next)
           (make-instruction-sequence '(val) '(arg2)
                                      '((assign arg2 (reg val)))))))
-    (preserving '(env)
+    (preserving '(env arg1)
                 op-code-2
-                (preserving '(arg2)
+                (preserving '(env arg2)
                             (compile (car operands-list) 'val 'next)
                             (make-instruction-sequence '(val) '(arg1)
                                                        '((assign arg1 (reg val))))))))
+
+(define (spread-arguments operands-list)
+  (let ((op-code-2
+         (compile (cadr operands-list) 'arg2 'next))
+        (op-code-1
+         (compile (car operands-list) 'arg1 'next)))
+    (preserving '(env val arg2)
+                op-code-1
+                op-code-2)))
+
+;; (define (spread-arguments operands-list)
+;;   (let ((op-code-1
+;;          (append-instruction-sequences
+;;           (compile (car operands-list 'val 'next))
+;;           (make-instruction-sequence '(val) '(arg1)
+;;                                      '((assign arg1 (reg val))))))
+;;         (op-code-2
+;;          (append-instruction-sequences
+;;           (compile (car operands-list 'val 'next))
+;;           (make-instruction-sequence '(val) '(arg2)
+;;                                      '((assign arg2 (reg val)))))))
+;;     (preserving '(env arg2)
+;;                 op-code-2
+;;                 op-code1)))
 
 ;; b
 
