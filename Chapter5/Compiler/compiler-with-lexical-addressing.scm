@@ -110,6 +110,102 @@ Strictly for test of lexical addressing -- excludes additions from Ex. 5.38
 
 
 ;; Ex. 5.40
+;; (define (compile-lambda-body exp proc-entry compile-time-env)
+;;   (let ((formals (lambda-parameters exp)))
+;;     (let ((extended-env
+;;            (extend-compile-time-environment formals compile-time-env)))
+;;       (append-instruction-sequences
+;;        (make-instruction-sequence '(env proc argl) '(env)
+;;                                   `(,proc-entry
+;;                                     (assign env (op compiled-procedure-env) (reg proc))
+;;                                     (assign env
+;;                                             (op extend-environment)
+;;                                             (const ,formals)
+;;                                             (reg argl)
+;;                                             (reg env))))
+;;        (compile-sequence (lambda-body exp) 'val 'return extended-env)))))
+
+
+;; Ex. 5.41
+(define (find-variable var compile-time-env)
+  (define (env-loop frame-number env)
+    (if (null? env)
+        'not-found
+        (let ((frame (first-compile-time-frame env)))
+          (let ((displacement-number (scan 0 frame)))
+            (if (eq? displacement-number 'not-found)
+                (env-loop (+ frame-number 1)
+                          (enclosing-compile-time-environment env))
+                (make-lexical-address
+                 frame-number
+                 displacement-number))))))
+  (define (scan displacement-number variables)
+    (if (null? variables)
+        'not-found
+        (if (eq? var (car variables))
+            displacement-number
+            (scan (+ displacement-number 1) (cdr variables)))))
+  (env-loop 0 compile-time-env))
+
+
+;; in addition to the standard machine primitives, we now need to expose the
+;; primitives we plan to open-code. Due to the nature of the global-environment,
+;; we need to re-start the machine each time. In essence, define the procedure and
+;; splice it into the list.
+(define the-global-environment (setup-environment))
+(define (get-global-environment) the-global-environment)
+(define compiled-code-operations
+  (list
+   ;; machine primitives from Scheme
+   (list 'cons cons)
+   (list 'list list)
+   (list '+ +)
+   (list '- -)
+   (list '* *)
+   (list '= =)
+   ;; truth
+   (list 'true? true?)
+   (list 'false? false?)
+   ;; environment operations
+   (list 'get-global-environment get-global-environment)
+   (list 'lexical-address-lookup lexical-address-lookup)
+   (list 'lexical-address-set! lexical-address-set!)
+   (list 'lookup-variable-value lookup-variable-value)
+   (list 'primitive-procedure? primitive-procedure?)
+   (list 'make-compiled-procedure make-compiled-procedure)
+   (list 'compiled-procedure-entry compiled-procedure-entry)
+   (list 'compiled-procedure-env compiled-procedure-env)
+   (list 'extend-environment extend-environment)
+   (list 'apply-primitive-procedure apply-primitive-procedure)
+   (list 'set-variable-value! set-variable-value!)
+   (list 'define-variable! define-variable!)
+   ))
+
+
+
+;; Ex. 5.43
+(define (unassigned-list n)
+  (if (= n 0)
+      '()
+      (cons '*unassigned* (unassigned-list (- n 1)))))
+
+(define (internal-definitions-transform body-exps)
+  (let ((defines (filter definition? body-exps)))
+    (if (null? defines)
+        body-exps
+        (let ((regulars (filter (lambda (exp) (not (definition? exp))) body-exps))
+              (variables (map definition-variable defines))
+              (value-exps (map definition-value defines)))
+          (let ((set!-exps (map (lambda (var exp)
+                                  (list 'set! var exp))
+                                variables
+                                value-exps)))
+            (list ;; makes this a body with single expression; necessary for body to be sequence
+             (cons ;; make this an application
+              (make-lambda variables
+                           (append set!-exps regulars))
+              (unassigned-list (length defines)))))))))
+
 (define (compile-lambda-body exp proc-entry compile-time-env)
   (let ((formals (lambda-parameters exp)))
     (let ((extended-env
@@ -123,5 +219,5 @@ Strictly for test of lexical addressing -- excludes additions from Ex. 5.38
                                             (const ,formals)
                                             (reg argl)
                                             (reg env))))
-       (compile-sequence (lambda-body exp) 'val 'return extended-env)))))
-
+       (compile-sequence (internal-definitions-transform (lambda-body exp))
+                         'val 'return extended-env)))))
