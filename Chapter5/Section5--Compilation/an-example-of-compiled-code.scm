@@ -791,3 +791,62 @@ would amount to stack operations somewhere.
                        (spread-var-arguments op operands-list target)
                        (end-with-linkage linkage
                                          (empty-instruction-sequence)))))))
+
+
+
+;; More rigorous tests of varargs handling
+(define factorial-varargs '((define (fact-vararg n)
+                              (define (factorial n)
+                                (if (= n 1)
+                                    1
+                                    (* (factorial (- n 1)) n)))
+                              (+ (factorial (+ n 1))
+                                 (factorial (+ n 2))
+                                 (factorial (+ n 3))
+                                 (* n (factorial n))))))
+(print-multi-adder-assembly factorial-varargs)
+
+
+(define (compiled-fact-varargs-with-monitoring n)
+  (define compiled-machine
+    (make-machine
+     all-regs
+     compiled-code-operations
+     `(
+       (perform (op initialize-stack))
+       ,@(statements
+          (begin (reset-label-counter)
+                 (compile
+                  `(begin
+                     (define (fact-varargs n)
+                       (define (factorial n)
+                         (if (= n 1)
+                             1
+                             (* (factorial (- n 1)) n)))
+                       (+ (factorial (+ n 1))
+                          (factorial (+ n 2))
+                          (factorial (+ n 3))
+                          (* n (factorial n))))
+                     (fact-varargs ,n))
+                  'val
+                  'next)
+                 ))
+       (perform (op print-stack-statistics))
+       )
+     ))
+  (define the-global-environment (setup-environment))
+  (define (get-global-environment) the-global-environment)
+  (set-register-contents! compiled-machine 'env (get-global-environment))
+  (start compiled-machine)
+  (get-register-contents compiled-machine 'val))
+(define (interactive-compiled-fact-varargs-with-monitoring)
+  (display ";;; enter n")
+  (newline)
+  (let ((n (read)))
+    (let ((result (compiled-fact-varargs-with-monitoring n)))
+      (newline)
+      (display "result = ")
+      (display result)))
+  (newline)
+  (interactive-compiled-fact-varargs-with-monitoring))
+
