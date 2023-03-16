@@ -109,7 +109,43 @@ Strictly for test of lexical addressing -- excludes additions from Ex. 5.38
                             (compile-procedure-call target linkage)))))
 
 
+(define (make-lexical-address f-num d-num) (list f-num d-num))
+(define (frame-number lexical-address) (car lexical-address))
+(define (displacement-number lexical-address) (cadr lexical-address))
+
+;; Ex. 5.39
+(define (lexical-address-lookup lexical-address runtime-env)
+  (let ((f-num (frame-number lexical-address))
+        (d-num (displacement-number lexical-address)))
+    (let ((frame (list-ref runtime-env f-num)))
+      (let ((val (list-ref (frame-values frame) d-num)))
+        (if (eq? val '*unassigned*)
+            (error "Unassigned variable"
+                   (list-ref (frame-variables frame) d-num))
+            val)))))
+
+(define (lexical-address-set! lexical-address value runtime-env)
+  (let ((f-num (frame-number lexical-address))
+        (d-num (displacement-number lexical-address)))
+    (let ((frame (list-ref runtime-env f-num)))
+      (if (eq? (list-ref-set-car! (frame-values frame) d-num value) 'not-ok)
+          (error "Bad lexical address" lexical-address runtime-env)
+          'ok))))
+(define (list-ref-set-car! seq n value)
+  (if (null? seq)
+      'not-ok
+      (if (= n 0)
+          (set-car! seq value)
+          (list-ref-set-car! (cdr seq) (- n 1) value))))
+
+
 ;; Ex. 5.40
+(define empty-compile-time-environment '())
+(define (extend-compile-time-environment formals compile-time-env)
+  (cons formals compile-time-env))
+(define (first-compile-time-frame compile-time-env) (car compile-time-env))
+(define (enclosing-compile-time-environment compile-time-env) (cdr compile-time-env))
+
 ;; (define (compile-lambda-body exp proc-entry compile-time-env)
 ;;   (let ((formals (lambda-parameters exp)))
 ;;     (let ((extended-env
@@ -148,38 +184,60 @@ Strictly for test of lexical addressing -- excludes additions from Ex. 5.38
   (env-loop 0 compile-time-env))
 
 
-;; in addition to the standard machine primitives, we now need to expose the
-;; primitives we plan to open-code. Due to the nature of the global-environment,
-;; we need to re-start the machine each time. In essence, define the procedure and
-;; splice it into the list.
-(define the-global-environment (setup-environment))
-(define (get-global-environment) the-global-environment)
-(define compiled-code-operations
-  (list
-   ;; machine primitives from Scheme
-   (list 'cons cons)
-   (list 'list list)
-   (list '+ +)
-   (list '- -)
-   (list '* *)
-   (list '= =)
-   ;; truth
-   (list 'true? true?)
-   (list 'false? false?)
-   ;; environment operations
-   (list 'get-global-environment get-global-environment)
-   (list 'lexical-address-lookup lexical-address-lookup)
-   (list 'lexical-address-set! lexical-address-set!)
-   (list 'lookup-variable-value lookup-variable-value)
-   (list 'primitive-procedure? primitive-procedure?)
-   (list 'make-compiled-procedure make-compiled-procedure)
-   (list 'compiled-procedure-entry compiled-procedure-entry)
-   (list 'compiled-procedure-env compiled-procedure-env)
-   (list 'extend-environment extend-environment)
-   (list 'apply-primitive-procedure apply-primitive-procedure)
-   (list 'set-variable-value! set-variable-value!)
-   (list 'define-variable! define-variable!)
-   ))
+;; Ex. 5.42
+(define (compile-variable exp target linkage compile-time-env)
+  (let ((lexical-address (find-variable exp compile-time-env)))
+    (if (eq? 'not-found lexical-address)
+        (end-with-linkage
+         linkage
+         (make-instruction-sequence '(env) (list target)
+                                    ;; A daring way to avoid a save/restore of env;
+                                    ;; otherwise: save env, assign the global-env to env
+                                    ;; assign target, restore env.
+                                    ;; Anything stored in target is about to be clobbered
+                                    ;; anyway, thus, it does not matter if we temporarily
+                                    ;; set it to something other than the final value.
+                                    `((assign ,target (op get-global-environment))
+                                      (assign ,target
+                                              (op lookup-variable-value)
+                                              (const ,exp)
+                                              (reg ,target)))))
+        (end-with-linkage
+         linkage
+         (make-instruction-sequence '(env) (list target)
+                                    `((assign ,target
+                                              (op lexical-address-lookup)
+                                              (const ,lexical-address)
+                                              (reg env))))))))
+
+
+(define (compile-assigment exp target linkage compile-time-env)
+  (let ((var (assignment-variable exp))
+        (get-value-code
+         (compile (assignment-value exp) 'val 'next compile-time-env)))
+    (let ((lexical-address (find-variable exp compile-time-env)))
+      (if (eq? 'not-found lexical-address)
+          (end-with-linkage
+           linkage
+           (preserving '(env)
+                       get-value-code
+                       (make-instruction-sequence '(env val) (list target)
+                                                  `((assign ,target (op get-global-environment))
+                                                    (perform (op set-variable-value!)
+                                                             (const ,var)
+                                                             (reg val)
+                                                             (reg ,target))
+                                                    (assign ,target (const ok))))))
+          (end-with-linkage
+           linkage
+           (preserving '(env)
+                       get-value-code
+                       (make-instruction-sequence '(env val) (list target)
+                                                  `((perform op (lexical-address-set!)
+                                                             (const ,lexical-address)
+                                                             (reg val)
+                                                             (reg ,target))
+                                                    (assign ,target (const ok))))))))))
 
 
 
@@ -221,3 +279,37 @@ Strictly for test of lexical addressing -- excludes additions from Ex. 5.38
                                             (reg env))))
        (compile-sequence (internal-definitions-transform (lambda-body exp))
                          'val 'return extended-env)))))
+
+
+;; in addition to the standard machine primitives, we now need to expose the
+;; primitives we plan to open-code. Due to the nature of the global-environment,
+;; we need to re-start the machine each time. In essence, define the procedure and
+;; splice it into the list.
+(define the-global-environment (setup-environment))
+(define (get-global-environment) the-global-environment)
+(define compiled-code-operations
+  (list
+   ;; machine primitives from Scheme
+   (list 'cons cons)
+   (list 'list list)
+   (list '+ +)
+   (list '- -)
+   (list '* *)
+   (list '= =)
+   ;; truth
+   (list 'true? true?)
+   (list 'false? false?)
+   ;; environment operations
+   (list 'get-global-environment get-global-environment)
+   (list 'lexical-address-lookup lexical-address-lookup)
+   (list 'lexical-address-set! lexical-address-set!)
+   (list 'lookup-variable-value lookup-variable-value)
+   (list 'primitive-procedure? primitive-procedure?)
+   (list 'make-compiled-procedure make-compiled-procedure)
+   (list 'compiled-procedure-entry compiled-procedure-entry)
+   (list 'compiled-procedure-env compiled-procedure-env)
+   (list 'extend-environment extend-environment)
+   (list 'apply-primitive-procedure apply-primitive-procedure)
+   (list 'set-variable-value! set-variable-value!)
+   (list 'define-variable! define-variable!)
+   ))
