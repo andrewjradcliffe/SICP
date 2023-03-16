@@ -15,25 +15,16 @@ Strictly for test of Ex. 5.38
 (define all-regs '(env proc val argl continue arg1 arg2))
 
 ;; a
-;; (define (spread-arguments operands-list)
-;;   (let ((op-code-2
-;;          (append-instruction-sequences
-;;           (compile (cadr operands-list) 'val 'next)
-;;           (make-instruction-sequence '(val) '(arg2)
-;;                                      '((assign arg2 (reg val)))))))
-;;     (preserving '(env)
-;;                 op-code-2
-;;                 (preserving '(arg2)
-;;                             (compile (car operands-list) 'val 'next)
-;;                             (make-instruction-sequence '(val arg2) '(arg1)
-;;                                                        '((assign arg1 (reg val))))))))
-
 ;; In fact, this can be made more succinct by eliminating the unnecessary
-;; assignments to val, followed by assignment to arg1 or arg2
+;; assignments to val, followed by assignment to arg1 or arg2.
+;; This eliminates 2 useless assign instructions per open-coded primitive,
+;; a significant savings! (given that everything reduces to primitives).
 (define (spread-arguments operands-list)
   (let ((op-code-2 (compile (cadr operands-list) 'arg2 'next)))
     (preserving '(env)
                 op-code-2
+                ;; An idiosyncratic but systematic way to express:
+                ;; preserve arg2 only if the compilation of the first argument modifies it
                 (preserving '(arg2)
                             (compile (car operands-list) 'arg1 'next)
                             (make-instruction-sequence '(arg2) '()
@@ -41,7 +32,6 @@ Strictly for test of Ex. 5.38
 
 
 ;; b
-
 (define (compile-open-code exp target linkage)
   (let ((argument-code (spread-arguments (operands exp)))
         (op (operator exp)))
