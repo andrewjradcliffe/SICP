@@ -382,11 +382,15 @@ exponentially slower.
 ;;                                                        '((assign arg1 (reg val))))))))
 
 ;; In fact, this can be made more succinct by eliminating the unnecessary
-;; assignments to val, followed by assignment to arg1 or arg2
+;; assignments to val, followed by assignment to arg1 or arg2.
+;; This eliminates 2 useless assign instructions per open-coded primitive,
+;; a significant savings! (given that everything reduces to primitives).
 (define (spread-arguments operands-list)
   (let ((op-code-2 (compile (cadr operands-list) 'arg2 'next)))
     (preserving '(env)
                 op-code-2
+                ;; An idiosyncratic but systematic way to express:
+                ;; preserve arg2 only if the compilation of the first argument modifies it
                 (preserving '(arg2)
                             (compile (car operands-list) 'arg1 'next)
                             (make-instruction-sequence '(arg2) '()
@@ -672,3 +676,6 @@ than Version 1.
 ;; within compile, prior to application-open-code?
 ((application-open-code-varargs? exp)
  (compile (op-varargs->nested-2-arg exp) target linkage))
+
+
+;; d, revised in light of simplified a
