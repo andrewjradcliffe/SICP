@@ -300,7 +300,6 @@ Strictly for test of lexical addressing -- excludes additions from Ex. 5.38
    (list 'true? true?)
    (list 'false? false?)
    ;; environment operations
-   (list 'get-global-environment get-global-environment)
    (list 'lexical-address-lookup lexical-address-lookup)
    (list 'lexical-address-set! lexical-address-set!)
    (list 'lookup-variable-value lookup-variable-value)
@@ -312,4 +311,6 @@ Strictly for test of lexical addressing -- excludes additions from Ex. 5.38
    (list 'apply-primitive-procedure apply-primitive-procedure)
    (list 'set-variable-value! set-variable-value!)
    (list 'define-variable! define-variable!)
+   ;; needs to be spliced in when machine is created.
+   ;; (list 'get-global-environment get-global-environment)
    ))

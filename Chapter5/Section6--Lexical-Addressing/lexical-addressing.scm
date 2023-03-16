@@ -166,3 +166,143 @@ quite support yet. Thus, it is worthwhile to implement the transformation direct
               (make-lambda variables
                            (append set!-exps regulars))
               (unassigned-list (length defines)))))))))
+
+
+;; Test case #1
+(define figure-5.17
+  (begin (reset-label-counter)
+         (compile
+          '(define (factorial n)
+             (if (= n 1)
+                 1
+                 (* (factorial (- n 1)) n)))
+          'val
+          'next
+          empty-compile-time-environment)))
+(print-compiled-instruction-sequence figure-5.17)
+
+(define (compiled-factorial-eval-with-monitoring n)
+  (define the-global-environment (setup-environment))
+  (define (get-global-environment) the-global-environment)
+  (define compiled-machine
+    (make-machine
+     all-regs
+     (append (list (list 'get-global-environment get-global-environment))
+             compiled-code-operations)
+     `(
+       (perform (op initialize-stack))
+       ,@(statements
+          (begin (reset-label-counter)
+                 (compile
+                  `(begin
+                     (define (factorial n)
+                       (if (= n 1)
+                           1
+                           (* (factorial (- n 1)) n)))
+                     (factorial ,n))
+                  'val
+                  'next
+                  empty-compile-time-environment)
+                 ))
+       (perform (op print-stack-statistics))
+       )
+     ))
+  (set-register-contents! compiled-machine 'env (get-global-environment))
+  (start compiled-machine)
+  (get-register-contents compiled-machine 'val)
+  )
+(define (interactive-compiled-factorial-eval-with-monitoring)
+  (display ";;; enter n")
+  (newline)
+  (let ((n (read)))
+    (let ((result (compiled-factorial-eval-with-monitoring n)))
+      (newline)
+      (display "factorial of ")
+      (display n)
+      (display " = ")
+      (display result)))
+  (newline)
+  (interactive-compiled-factorial-eval-with-monitoring))
+
+;; Test case #2
+(define (test-f a b c d e)
+  (((lambda (x y)
+      (lambda (a b c d e)
+        ((lambda (y z) (* x y z))
+         (* a b x)
+         (+ c d x))))
+    3
+    4)
+   a b c d e))
+(define test-f-asm
+  (begin (reset-label-counter)
+         (compile
+          '(define (test-f a b c d e)
+             (((lambda (x y)
+                 (lambda (a b c d e)
+                   ((lambda (y z) (* x y z))
+                    (* a b x)
+                    (+ c d x))))
+               3
+               4)
+              a b c d e))
+          'val
+          'next
+          empty-compile-time-environment)))
+(print-compiled-instruction-sequence test-f-asm)
+
+
+(define (compiled-test-f-eval-with-monitoring a b c d e)
+  (define the-global-environment (setup-environment))
+  (define (get-global-environment) the-global-environment)
+  (define compiled-machine
+    (make-machine
+     all-regs
+     (append (list (list 'get-global-environment get-global-environment))
+             compiled-code-operations)
+     `(
+       (perform (op initialize-stack))
+       ,@(statements
+          (begin (reset-label-counter)
+                 (compile
+                  `(begin
+                     (define (test-f a b c d e)
+                       (((lambda (x y)
+                           (lambda (a b c d e)
+                             ((lambda (y z) (* x y z))
+                              (* a b x)
+                              (+ c d x))))
+                         3
+                         4)
+                        a b c d e))
+                     (test-f ,a ,b ,c ,d ,e))
+                  'val
+                  'next
+                  empty-compile-time-environment)
+                 ))
+       (perform (op print-stack-statistics))
+       )
+     ))
+  (set-register-contents! compiled-machine 'env (get-global-environment))
+  (start compiled-machine)
+  (get-register-contents compiled-machine 'val)
+  )
+(define (interactive-compiled-test-f-eval-with-monitoring)
+  (display ";;; enter n")
+  (newline)
+  (let ((abcde (read)))
+    (let ((a (first abcde))
+          (b (second abcde))
+          (c (third abcde))
+          (d (fourth abcde))
+          (e (fifth abcde)))
+      (let ((result (compiled-test-f-eval-with-monitoring a b c d e)))
+        (newline)
+        (display "test-f of ")
+        (display abcde)
+        (display " = ")
+        (display result)
+        (display "    check value of test-f = ")
+        (display (test-f a b c d e)))))
+  (newline)
+  (interactive-compiled-test-f-eval-with-monitoring))
