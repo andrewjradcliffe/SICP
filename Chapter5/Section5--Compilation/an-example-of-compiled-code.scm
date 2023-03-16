@@ -522,6 +522,7 @@ Dramatic increase in efficiency.
 (define left-to-right '(+ (+ (+ a b) c) d))
 (define mixed '(+ (+ a b) (+ c d)))
 (define nested '(+ (+ (+ a (+ a (+ b (+ c d)))) c) d))
+(define varargs '(+ a b c d))
 
 (define (print-multi-adder-assembly adder-exp)
   (define multi-adder
@@ -535,6 +536,7 @@ Dramatic increase in efficiency.
 (print-multi-adder-assembly right-to-left)
 (print-multi-adder-assembly left-to-right)
 (print-multi-adder-assembly mixed)
+(print-multi-adder-assembly varargs)
 
 
 ;; Another useful tester; multiple compiled procedure calls prior to completion
@@ -600,61 +602,98 @@ a syntactic transformation (denoted as Version 2).
 
 Version 2 seems to have a disadvantage -- it should incur more stack allocations
 than Version 1.
+
+Version 2 is the least complicated way to implement varargs, and also the most robust.
+Notably, comparison of the simplified Version 1 and Version 2 indicates that they
+produce identical machine code; hence, it is preferable to just use a syntactic
+transformation, rather than to add a specific code generator (which is useless).
+
+Version 2 incurs no more stack allocations than the simplified Version 1.
+The presence or absence of stack allocations in varargs statements depends on
+the folding direction chosen for the implementation of two-argument open-coded
+primitives -- if one chooses fold-left, then one gets stack allocations; if
+one chooses fold-right, then nothing needs to be saved on the stack.
+
+Consider an expression: (+ a b c)
+which corresponds to: (+ a (+ b c))
+    or, equivalently: (+ (+ a b) c)
+
+As our two-argument open-coded primitive implementation folds from right-to-left,
+the latter incurs a stack allocation. If we choose to implement open-coding which
+folds from left-to-right, then the former incurs a stack allocation.
+In essence, we need to implement varargs handling in the manner which matches
+the direction of folding used for our two-argument open-coding implementation.
+
+If we were to write a more sophisticated compiler, then we could eliminate
+some of these stack operations by analyzing the source program and re-arranging
+expressions involving open-coded primitives to conform to our folding direction.
+It would be legal to enact such a change everywhere, except for floating point
+operations (since floating point arithmetic is not associative).
+
+Interestingly, even for programming languages without varargs overloading of
+basic operators, this implies that each compiler would have a preferred
+order for nesting of parentheses in floating point arithmetic. If one matches
+the order, then one can re-use the same two registers; if not, then one would
+incur stack allocations -- though, a compiler would most likely allocate a register
+for each output in a sequence, rather than push/pop from the stack; but, the
+allocated registers would have to come from the language runtime, thus it actually
+would amount to stack operations somewhere.
+
 |#
 (define (application-open-code-varargs? exp)
   (if (pair? exp)
       (let ((op (car exp)))
         (and (or (eq? op '+) (eq? op '*))
-             (> (length (operands exp)) 2)))
+             (not (= (length (operands exp)) 2))))
       false))
 
 
 
-;; Version 1
-(define (spread-var-arguments op operands-list)
-  (let ((operands-list (reverse operands-list)))
-    (let ((last-code
-           (append-instruction-sequences
-            (compile (car operands-list) 'val 'next)
-            (make-instruction-sequence '(val) '(arg2)
-                                       '((assign arg1 (reg val)))))))
-      (preserving '(env)
-                  last-code
-                  (spread-rest-args op (cdr operands-list))))))
+;; Version 1 -- does not quite work; the simplified version does, however.
+;; (define (spread-var-arguments op operands-list)
+;;   (let ((operands-list (reverse operands-list)))
+;;     (let ((last-code
+;;            (append-instruction-sequences
+;;             (compile (car operands-list) 'val 'next)
+;;             (make-instruction-sequence '(val) '(arg2)
+;;                                        '((assign arg2 (reg val)))))))
+;;       (preserving '(env)
+;;                   last-code
+;;                   (spread-rest-args op (cdr operands-list))))))
 
-(define (spread-rest-args op operands-list)
-  (let ((op-code-1
-         (preserving '(arg2)
-                     (compile (car operands-list) 'val 'next)
-                     (make-instruction-sequence '(val arg2) '(arg1)
-                                                '((assign arg1 (reg val)))))))
-    (if (null? (cdr operands-list))
-        (append-instruction-sequences
-         op-code-1
-         (make-instruction-sequence '(arg1 arg2) '(val)
-                                    `((assign val (op ,op) (reg arg1) (reg arg2)))))
-        (preserving '(env)
-                    (append-instruction-sequences
-                     op-code-1
-                     (make-instruction-sequence '(arg1 arg2) '(arg2)
-                                                `((assign arg2 (op ,op) (reg arg1) (reg arg2)))))
-                    (spread-rest-args op (cdr operands-list))))))
+;; (define (spread-rest-args op operands-list)
+;;   (let ((op-code-1
+;;          (preserving '(arg2)
+;;                      (compile (car operands-list) 'val 'next)
+;;                      (make-instruction-sequence '(val arg2) '(arg1)
+;;                                                 '((assign arg1 (reg val)))))))
+;;     (if (null? (cdr operands-list))
+;;         (append-instruction-sequences
+;;          op-code-1
+;;          (make-instruction-sequence '(arg1 arg2) '(val)
+;;                                     `((assign val (op ,op) (reg arg1) (reg arg2)))))
+;;         (preserving '(env)
+;;                     (append-instruction-sequences
+;;                      op-code-1
+;;                      (make-instruction-sequence '(arg1 arg2) '(arg2)
+;;                                                 `((assign arg2 (op ,op) (reg arg1) (reg arg2)))))
+;;                     (spread-rest-args op (cdr operands-list))))))
 
-(define (compile-open-code-varargs exp target linkage)
-  (let ((op (operator exp)))
-    (let ((argument-code (spread-var-arguments op (operands exp))))
-      (preserving '(env continue)
-                  argument-code
-                  (end-with-linkage linkage
-                                    (make-instruction-sequence '(val) (list target)
-                                                               `((assign ,target (reg val)))))
-                  ;; Or, a smarter ending:
-                  ;; (if (eq? target 'val)
-                  ;;     (end-with-linkage linkage (empty-instruction-sequence))
-                  ;;     (end-with-linkage linkage
-                  ;;                       (make-instruction-sequence '(val) (list target)
-                  ;;                                                  `((assign ,target (reg val))))))
-                  ))))
+;; (define (compile-open-code-varargs exp target linkage)
+;;   (let ((op (operator exp)))
+;;     (let ((argument-code (spread-var-arguments op (operands exp))))
+;;       (preserving '(env continue)
+;;                   argument-code
+;;                   (end-with-linkage linkage
+;;                                     (make-instruction-sequence '(val) (list target)
+;;                                                                `((assign ,target (reg val)))))
+;;                   ;; Or, a smarter ending:
+;;                   ;; (if (eq? target 'val)
+;;                   ;;     (end-with-linkage linkage (empty-instruction-sequence))
+;;                   ;;     (end-with-linkage linkage
+;;                   ;;                       (make-instruction-sequence '(val) (list target)
+;;                   ;;                                                  `((assign ,target (reg val))))))
+;;                   ))))
 ;; within compile, prior to application-open-code?
 ((application-open-code-varargs? exp)
  (compile-open-code-varargs exp target linkage))
@@ -697,7 +736,7 @@ than Version 1.
  (compile-open-code-varargs exp target linkage))
 
 
-;; d, revised in light of simplified a
+;; Version 1, revised in light of simplified a
 (define (spread-var-arguments op operands-list target)
   (let ((operands-list (reverse operands-list)))
     (let ((last-code (compile (car operands-list) 'arg2 'next)))
