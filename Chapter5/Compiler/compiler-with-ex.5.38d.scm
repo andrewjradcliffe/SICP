@@ -25,55 +25,6 @@ Strictly for test of Ex. 5.38. This includes 5.38d
              (not (= (length (operands exp)) 2))))
       false))
 
-
-
-;; Version 1
-;; (define (spread-var-arguments op operands-list target)
-;;   (let ((operands-list (reverse operands-list)))
-;;     (let ((last-code (compile (car operands-list) 'arg2 'next)))
-;;       (preserving '(env)
-;;                   last-code
-;;                   (spread-rest-args op (cdr operands-list) target)))))
-
-;; (define (spread-rest-args op operands-list target)
-;;   (let ((op-code-1
-;;          (preserving '(arg2)
-;;                      (compile (car operands-list) 'arg1 'next)
-;;                      (make-instruction-sequence '(arg2) '() '()))))
-;;     (if (null? (cdr operands-list))
-;;         (append-instruction-sequences
-;;          op-code-1
-;;          (make-instruction-sequence '(arg1 arg2) (list target)
-;;                                     `((assign ,target (op ,op) (reg arg1) (reg arg2)))))
-;;         (preserving '(env)
-;;                     (append-instruction-sequences
-;;                      op-code-1
-;;                      (make-instruction-sequence '(arg1 arg2) '(arg2)
-;;                                                 `((assign arg2 (op ,op) (reg arg1) (reg arg2)))))
-;;                     (spread-rest-args op (cdr operands-list) target)))))
-
-;; (define (compile-open-code-varargs exp target linkage)
-;;   (let ((op (operator exp))
-;;         (operands-list (operands exp)))
-;;     (cond ((= (length operands-list) 0)
-;;            (end-with-linkage
-;;             linkage
-;;             (make-instruction-sequence '() (list target)
-;;                                        `((assign ,target ,(neutral-element op))))))
-;;           ((= (length operands-list) 1)
-;;            (preserving '(env continue)
-;;                        (compile (car operands-list) 'arg1 'next)
-;;                        (end-with-linkage
-;;                         linkage
-;;                         (make-instruction-sequence '(arg1) (list target)
-;;                                                    `((assign ,target (op ,op) (reg arg1)))))))
-;;           ;; length of 2 caught by non-varargs, hence, else is for 3+
-;;           (else
-;;            (preserving '(env continue)
-;;                        (spread-var-arguments op operands-list target)
-;;                        (end-with-linkage linkage
-;;                                          (empty-instruction-sequence)))))))
-
 ;; Version 2 -- this is the least complicated way to enact varargs, and also the most robust.
 (define (op-varargs->nested-2-arg exp)
   (let ((op (operator exp))
