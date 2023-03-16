@@ -18,7 +18,7 @@ true-branch5
   (goto (reg continue))
 false-branch4
 ;; compute and return (* (factorial (- n 1)) n)
-   (save continue)
+  (save continue)
 ;; note eliminated assignment
 ;; as open-coded operators are computed from right-to-left, get n from env
   (assign arg2 (op lookup-variable-value) (const n) (reg env))
