@@ -398,7 +398,6 @@ exponentially slower.
 
 
 ;; b
-
 (define (compile-open-code exp target linkage)
   (let ((argument-code (spread-arguments (operands exp)))
         (op (operator exp)))
@@ -673,9 +672,83 @@ than Version 1.
                 (iter (cdr operands-list)))))
     (iter operands-list)))
 
+(define (compile-open-code-varargs exp target linkage)
+  (let ((op (operator exp))
+        (operands-list (operands exp)))
+    (cond ((= (length operands-list) 0)
+           (end-with-linkage
+            linkage
+            (make-instruction-sequence '() (list target)
+                                       `((assign ,target ,(neutral-element op))))))
+          ((= (length operands-list) 1)
+           (preserving '(env continue)
+                       (compile (car operands-list) 'arg1 'next)
+                       (end-with-linkage
+                        linkage
+                        (make-instruction-sequence '(arg1) (list target)
+                                                   `((assign ,target (op ,op) (reg arg1)))))))
+          ;; length of 2 caught by non-varargs, hence, else is for 3+
+          (else
+           (compile (op-varargs->nested-2-arg exp) target linkage)))))
+
+
 ;; within compile, prior to application-open-code?
 ((application-open-code-varargs? exp)
- (compile (op-varargs->nested-2-arg exp) target linkage))
+ (compile-open-code-varargs exp target linkage))
 
 
 ;; d, revised in light of simplified a
+(define (spread-var-arguments op operands-list target)
+  (let ((operands-list (reverse operands-list)))
+    (let ((last-code (compile (car operands-list) 'arg2 'next)))
+      (preserving '(env)
+                  last-code
+                  (spread-rest-args op (cdr operands-list) target)))))
+
+(define (spread-rest-args op operands-list target)
+  (let ((op-code-1
+         (preserving '(arg2)
+                     (compile (car operands-list) 'arg1 'next)
+                     (make-instruction-sequence '(arg2) '() '()))))
+    (if (null? (cdr operands-list))
+        (append-instruction-sequences
+         op-code-1
+         (make-instruction-sequence '(arg1 arg2) (list target)
+                                    `((assign ,target (op ,op) (reg arg1) (reg arg2)))))
+        (preserving '(env)
+                    (append-instruction-sequences
+                     op-code-1
+                     (make-instruction-sequence '(arg1 arg2) '(arg2)
+                                                `((assign arg2 (op ,op) (reg arg1) (reg arg2)))))
+                    (spread-rest-args op (cdr operands-list) target)))))
+(define (neutral-element op)
+  (cond ((eq? op '+) 0)
+        ((eq? op '*) 1)
+        ((eq? op '=) true)
+        ((eq? op '>) true)
+        ((eq? op '<) true)
+        ((eq? op '>=) true)
+        ((eq? op '<=) true)
+        (else (error "unknown op -- NEUTRAL-ELEMENT" op))))
+
+(define (compile-open-code-varargs exp target linkage)
+  (let ((op (operator exp))
+        (operands-list (operands exp)))
+    (cond ((= (length operands-list) 0)
+           (end-with-linkage
+            linkage
+            (make-instruction-sequence '() (list target)
+                                       `((assign ,target ,(neutral-element op))))))
+          ((= (length operands-list) 1)
+           (preserving '(env continue)
+                       (compile (car operands-list) 'arg1 'next)
+                       (end-with-linkage
+                        linkage
+                        (make-instruction-sequence '(arg1) (list target)
+                                                   `((assign ,target (op ,op) (reg arg1)))))))
+          ;; length of 2 caught by non-varargs, hence, else is for 3+
+          (else
+           (preserving '(env continue)
+                       (spread-var-arguments op operands-list target)
+                       (end-with-linkage linkage
+                                         (empty-instruction-sequence)))))))
