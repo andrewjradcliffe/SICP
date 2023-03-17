@@ -81,22 +81,6 @@ Strictly for test of lexical addressing -- excludes additions from Ex. 5.38
                   (compile (first-exp seq) target 'next compile-time-env)
                   (compile-sequence (rest-exps seq) target linkage compile-time-env))))
 
-(define (compile-lambda exp target linkage compile-time-env)
-  (let ((proc-entry (make-label 'entry))
-        (after-lambda (make-label 'after-lambda)))
-    (let ((lambda-linkage
-           (if (eq? linkage 'next) after-lambda linkage)))
-      (append-instruction-sequences
-       (tack-on-instruction-sequence
-        (end-with-linkage
-         lambda-linkage
-         (make-instruction-sequence '(env) (list target)
-                                    `((assign ,target
-                                              (op make-compiled-procedure)
-                                              (label ,proc-entry)
-                                              (reg env)))))
-        (compile-lambda-body exp proc-entry compile-time-env))
-       after-lambda))))
 (define (compile-application exp target linkage compile-time-env)
   (let ((proc-code (compile (operator exp) 'proc 'next compile-time-env))
         (operand-codes
@@ -146,20 +130,20 @@ Strictly for test of lexical addressing -- excludes additions from Ex. 5.38
 (define (first-compile-time-frame compile-time-env) (car compile-time-env))
 (define (enclosing-compile-time-environment compile-time-env) (cdr compile-time-env))
 
-;; (define (compile-lambda-body exp proc-entry compile-time-env)
-;;   (let ((formals (lambda-parameters exp)))
-;;     (let ((extended-env
-;;            (extend-compile-time-environment formals compile-time-env)))
-;;       (append-instruction-sequences
-;;        (make-instruction-sequence '(env proc argl) '(env)
-;;                                   `(,proc-entry
-;;                                     (assign env (op compiled-procedure-env) (reg proc))
-;;                                     (assign env
-;;                                             (op extend-environment)
-;;                                             (const ,formals)
-;;                                             (reg argl)
-;;                                             (reg env))))
-;;        (compile-sequence (lambda-body exp) 'val 'return extended-env)))))
+(define (compile-lambda-body exp proc-entry compile-time-env)
+  (let ((formals (lambda-parameters exp)))
+    (let ((extended-env
+           (extend-compile-time-environment formals compile-time-env)))
+      (append-instruction-sequences
+       (make-instruction-sequence '(env proc argl) '(env)
+                                  `(,proc-entry
+                                    (assign env (op compiled-procedure-env) (reg proc))
+                                    (assign env
+                                            (op extend-environment)
+                                            (const ,formals)
+                                            (reg argl)
+                                            (reg env))))
+       (compile-sequence (lambda-body exp) 'val 'return extended-env)))))
 
 
 ;; Ex. 5.41
@@ -210,34 +194,41 @@ Strictly for test of lexical addressing -- excludes additions from Ex. 5.38
                                               (const ,lexical-address)
                                               (reg env))))))))
 
-
 (define (compile-assigment exp target linkage compile-time-env)
   (let ((var (assignment-variable exp))
         (get-value-code
          (compile (assignment-value exp) 'val 'next compile-time-env)))
-    (let ((lexical-address (find-variable exp compile-time-env)))
+    (let ((lexical-address (find-variable var compile-time-env)))
       (if (eq? 'not-found lexical-address)
           (end-with-linkage
            linkage
            (preserving '(env)
-                       get-value-code
-                       (make-instruction-sequence '(env val) (list target)
-                                                  `((assign ,target (op get-global-environment))
-                                                    (perform (op set-variable-value!)
-                                                             (const ,var)
-                                                             (reg val)
-                                                             (reg ,target))
-                                                    (assign ,target (const ok))))))
+                        get-value-code
+                        (make-instruction-sequence
+                         '(env val) (list target)
+                          ;; Here, however, the analogy to above is potentially fatal
+                          ;; as the value being set! is stored in val, and if
+                          ;; target is val, then we destroy the value.
+                          ;; Save/restore of env seems inevitable.
+                          `((save env)
+                            (assign env (op get-global-environment))
+                            (perform (op set-variable-value!)
+                                     (const ,var)
+                                     (reg val)
+                                     (reg env))
+                            (restore env)
+                            (assign ,target (const ok))))))
           (end-with-linkage
            linkage
            (preserving '(env)
-                       get-value-code
-                       (make-instruction-sequence '(env val) (list target)
-                                                  `((perform op (lexical-address-set!)
-                                                             (const ,lexical-address)
-                                                             (reg val)
-                                                             (reg ,target))
-                                                    (assign ,target (const ok))))))))))
+                        get-value-code
+                        (make-instruction-sequence
+                         '(env val) (list target)
+                          `((perform op (lexical-address-set!)
+                                     (const ,lexical-address)
+                                     (reg val)
+                                     (reg ,target))
+                            (assign ,target (const ok))))))))))
 
 
 
@@ -245,7 +236,7 @@ Strictly for test of lexical addressing -- excludes additions from Ex. 5.38
 (define (unassigned-list n)
   (if (= n 0)
       '()
-      (cons '*unassigned* (unassigned-list (- n 1)))))
+      (cons ''*unassigned* (unassigned-list (- n 1)))))
 
 (define (internal-definitions-transform body-exps)
   (let ((defines (filter definition? body-exps)))
@@ -264,21 +255,28 @@ Strictly for test of lexical addressing -- excludes additions from Ex. 5.38
                            (append set!-exps regulars))
               (unassigned-list (length defines)))))))))
 
-(define (compile-lambda-body exp proc-entry compile-time-env)
-  (let ((formals (lambda-parameters exp)))
-    (let ((extended-env
-           (extend-compile-time-environment formals compile-time-env)))
+(define (lambda-internal-transform exp)
+  (make-lambda (lambda-parameters exp)
+               (internal-definitions-transform (lambda-body exp))))
+
+
+(define (compile-lambda exp target linkage compile-time-env)
+  (let ((proc-entry (make-label 'entry))
+        (after-lambda (make-label 'after-lambda)))
+    (let ((lambda-linkage
+           (if (eq? linkage 'next) after-lambda linkage)))
       (append-instruction-sequences
-       (make-instruction-sequence '(env proc argl) '(env)
-                                  `(,proc-entry
-                                    (assign env (op compiled-procedure-env) (reg proc))
-                                    (assign env
-                                            (op extend-environment)
-                                            (const ,formals)
-                                            (reg argl)
-                                            (reg env))))
-       (compile-sequence (internal-definitions-transform (lambda-body exp))
-                         'val 'return extended-env)))))
+       (tack-on-instruction-sequence
+        (end-with-linkage
+         lambda-linkage
+         (make-instruction-sequence '(env) (list target)
+                                    `((assign ,target
+                                              (op make-compiled-procedure)
+                                              (label ,proc-entry)
+                                              (reg env)))))
+        (compile-lambda-body
+         (lambda-internal-transform exp) proc-entry compile-time-env))
+       after-lambda))))
 
 
 ;; in addition to the standard machine primitives, we now need to expose the
