@@ -354,3 +354,123 @@ open-coding. Either compiler can be loaded and the examples tested.
         (display (test-f-3 a b)))))
   (newline)
   (interactive-compiled-test-f-4-eval-with-monitoring))
+
+;; Test case #6
+;; Only after Ex. 5.44 will the open-coding compiler pass this test
+#|
+A: 2x2 in row-major order
+A_11 : car
+A_12 : cadr
+A_21 : caddr
+A_22 : cadddr
+|#
+(define (linear-combination + * a b x y)
+  (+ (* a x) (* b y)))
+(define (+matrix-2-by-2 A B)
+  (list (+ (car A) (car B))
+        (+ (cadr A) (cadr B))
+        (+ (caddr A) (caddr B))
+        (+ (cadddr A) (cadddr B))))
+(define (*matrix-2-by-2 A B)
+  (list (+ (* (car A) (car B)) (* (cadr A) (caddr B)))
+        (+ (* (car A) (cadr B)) (* (cadr A) (cadddr B)))
+        (+ (* (caddr A) (car B)) (* (cadddr A) (caddr B)))
+        (+ (* (caddr A) (cadr B)) (* (cadddr A) (cadddr B)))))
+(define (scaled-matrix-identity-2-by-2 a) (list a 0 0 a))
+(define a '(1 0 0 1))
+(define b '(2 0 0 2))
+(define x '(1 2 3 4))
+(equal? '(7 10 15 22) (*matrix-2-by-2 '(1 2 3 4) '(1 2 3 4)))
+(linear-combination +matrix-2-by-2 *matrix-2-by-2 a b x x)
+
+(define test-linear-combination-asm
+  (begin (reset-label-counter)
+         (compile
+          '(begin
+             (define (cadr x) (car (cdr x)))
+             (define (caddr x) (car (cdr (cdr x))))
+             (define (cadddr x) (car (cdr (cdr (cdr x)))))
+             (define (linear-combination + * a b x y)
+               (+ (* a x) (* b y)))
+             (define (+matrix-2-by-2 A B)
+               (list (+ (car A) (car B))
+                     (+ (cadr A) (cadr B))
+                     (+ (caddr A) (caddr B))
+                     (+ (cadddr A) (cadddr B))))
+             (define (*matrix-2-by-2 A B)
+               (list (+ (* (car A) (car B)) (* (cadr A) (caddr B)))
+                     (+ (* (car A) (cadr B)) (* (cadr A) (cadddr B)))
+                     (+ (* (caddr A) (car B)) (* (cadddr A) (caddr B)))
+                     (+ (* (caddr A) (cadr B)) (* (cadddr A) (cadddr B)))))
+             (define a '(1 0 0 1))
+             (define b '(2 0 0 2))
+             (define x '(1 2 3 4)))
+          'val
+          'next
+          empty-compile-time-environment)))
+(print-compiled-instruction-sequence test-linear-combination-asm)
+
+
+(define (compiled-test-linear-comb-eval-with-monitoring a)
+  (define the-global-environment (setup-environment))
+  (define (get-global-environment) the-global-environment)
+  (define compiled-machine
+    (make-machine
+     all-regs
+     (append (list (list 'get-global-environment get-global-environment))
+             compiled-code-operations)
+     `(
+       (perform (op initialize-stack))
+       ,@(statements
+          (begin (reset-label-counter)
+                 (compile
+                  `(begin
+                     (define (cadr x) (car (cdr x)))
+                     (define (caddr x) (car (cdr (cdr x))))
+                     (define (cadddr x) (car (cdr (cdr (cdr x)))))
+                     (define (linear-combination + * a b x y)
+                       (+ (* a x) (* b y)))
+                     (define (+matrix-2-by-2 A B)
+                       (list (+ (car A) (car B))
+                             (+ (cadr A) (cadr B))
+                             (+ (caddr A) (caddr B))
+                             (+ (cadddr A) (cadddr B))))
+                     (define (*matrix-2-by-2 A B)
+                       (list (+ (* (car A) (car B)) (* (cadr A) (caddr B)))
+                             (+ (* (car A) (cadr B)) (* (cadr A) (cadddr B)))
+                             (+ (* (caddr A) (car B)) (* (cadddr A) (caddr B)))
+                             (+ (* (caddr A) (cadr B)) (* (cadddr A) (cadddr B)))))
+                     (define (scaled-matrix-identity-2-by-2 a) (list a 0 0 a))
+                     (define a '(1 0 0 1))
+                     (define b (scaled-matrix-identity-2-by-2 ,a))
+                     (define x '(1 2 3 4))
+                     (linear-combination +matrix-2-by-2 *matrix-2-by-2 a b x x))
+                  'val
+                  'next
+                  empty-compile-time-environment)
+                 ))
+       (perform (op print-stack-statistics))
+       )
+     ))
+  (set-register-contents! compiled-machine 'env (get-global-environment))
+  (start compiled-machine)
+  (get-register-contents compiled-machine 'val)
+  )
+(define (interactive-compiled-test-linear-comb-eval-with-monitoring)
+  (display ";;; enter a")
+  (newline)
+  (let ((a (read)))
+    (let ((result (compiled-test-linear-comb-eval-with-monitoring a)))
+      (newline)
+      (display "test-linear-comb of ")
+      (display a)
+      (display " = ")
+      (display result)
+      (display "    check value of test-linear-comb = ")
+      (display (linear-combination +matrix-2-by-2 *matrix-2-by-2
+                                   '(1 0 0 1)
+                                   (scaled-matrix-identity-2-by-2 a)
+                                   '(1 2 3 4)
+                                   '(1 2 3 4)))))
+  (newline)
+  (interactive-compiled-test-linear-comb-eval-with-monitoring))
