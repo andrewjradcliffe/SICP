@@ -138,7 +138,7 @@
                           `((perform op (lexical-address-set!)
                                      (const ,lexical-address)
                                      (reg val)
-                                     (reg ,target))
+                                     (reg env))
                             (assign ,target (const ok))))))))))
 
 

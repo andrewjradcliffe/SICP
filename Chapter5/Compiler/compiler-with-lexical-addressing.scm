@@ -227,7 +227,7 @@ Strictly for test of lexical addressing -- excludes additions from Ex. 5.38
                           `((perform op (lexical-address-set!)
                                      (const ,lexical-address)
                                      (reg val)
-                                     (reg ,target))
+                                     (reg env))
                             (assign ,target (const ok))))))))))
 
 
