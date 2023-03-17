@@ -185,3 +185,28 @@ compile-lambda to be:
   (make-lambda (lambda-parameters exp)
                (internal-definitions-transform (lambda-body exp))))
 
+
+;; Ex. 5.44
+#|
+There are two approaches:
+1. modify compile-open-code, which is not only more involved, but also potentially implies
+   modifications elsewhere.
+2. more nuanced predicates and dispatch within compile
+
+The latter is not only more elegant, it is more flexible.
+|#
+
+(define (application-open-code? exp compile-time-env)
+  (if (pair? exp)
+      (let ((op (operator exp)))
+        (and (or (eq? op '+) (eq? op '-) (eq? op '*) (eq? op '=))
+             (eq? 'not-found (find-variable op compile-time-env))))
+      false))
+
+(define (application-open-code-varargs? exp compile-time-env)
+  (if (pair? exp)
+      (let ((op (operator exp)))
+        (and (or (eq? op '+) (eq? op '-) (eq? op '*) (eq? op '=))
+             (eq? 'not-found (find-variable op compile-time-env))))
+      false))
+
