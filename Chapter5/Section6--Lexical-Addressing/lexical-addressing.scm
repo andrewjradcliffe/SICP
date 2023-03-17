@@ -206,7 +206,8 @@ The latter is not only more elegant, it is more flexible.
 (define (application-open-code-varargs? exp compile-time-env)
   (if (pair? exp)
       (let ((op (operator exp)))
-        (and (or (eq? op '+) (eq? op '-) (eq? op '*) (eq? op '=))
+        (and (or (eq? op '+) (eq? op '*))
+             (not (= (length (operands exp)) 2))
              (eq? 'not-found (find-variable op compile-time-env))))
       false))
 

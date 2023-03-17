@@ -26,11 +26,6 @@ Strictly for test of lexical addressing -- excludes additions from Ex. 5.38
                                                                        (op ,op)
                                                                        (reg arg1)
                                                                        (reg arg2))))))))
-(define (application-open-code? exp)
-  (if (pair? exp)
-      (let ((op (car exp)))
-        (or (eq? op '+) (eq? op '-) (eq? op '*) (eq? op '=)))
-      false))
 (define (neutral-element op)
   (cond ((eq? op '+) 0)
         ((eq? op '*) 1)
@@ -40,12 +35,7 @@ Strictly for test of lexical addressing -- excludes additions from Ex. 5.38
         ((eq? op '>=) true)
         ((eq? op '<=) true)
         (else (error "unknown op -- NEUTRAL-ELEMENT" op))))
-(define (application-open-code-varargs? exp)
-  (if (pair? exp)
-      (let ((op (car exp)))
-        (and (or (eq? op '+) (eq? op '*))
-             (not (= (length (operands exp)) 2))))
-      false))
+
 (define (op-varargs->nested-2-arg exp)
   (let ((op (operator exp))
         (operands-list (operands exp)))
@@ -74,7 +64,33 @@ Strictly for test of lexical addressing -- excludes additions from Ex. 5.38
           (else
            (compile (op-varargs->nested-2-arg exp) target linkage compile-time-env)))))
 
+;; Open-coding as per Ex. 5.38
+;; (define (application-open-code? exp)
+;;   (if (pair? exp)
+;;       (let ((op (car exp)))
+;;         (or (eq? op '+) (eq? op '-) (eq? op '*) (eq? op '=)))
+;;       false))
+;; (define (application-open-code-varargs? exp)
+;;   (if (pair? exp)
+;;       (let ((op (car exp)))
+;;         (and (or (eq? op '+) (eq? op '*))
+;;              (not (= (length (operands exp)) 2))))
+;;       false))
 
+;; More nuanced open-coding as per Ex. 5.44
+(define (application-open-code? exp compile-time-env)
+  (if (pair? exp)
+      (let ((op (operator exp)))
+        (and (or (eq? op '+) (eq? op '-) (eq? op '*) (eq? op '=))
+             (eq? 'not-found (find-variable op compile-time-env))))
+      false))
+(define (application-open-code-varargs? exp compile-time-env)
+  (if (pair? exp)
+      (let ((op (operator exp)))
+        (and (or (eq? op '+) (eq? op '*))
+             (not (= (length (operands exp)) 2))
+             (eq? 'not-found (find-variable op compile-time-env))))
+      false))
 
 ;; modified compile
 (define (compile exp target linkage compile-time-env)
@@ -96,9 +112,15 @@ Strictly for test of lexical addressing -- excludes additions from Ex. 5.38
                            target
                            linkage
                            compile-time-env))
-        ((application-open-code-varargs? exp)
+        ;; Open-coding as per Ex. 5.38
+        ;; ((application-open-code-varargs? exp)
+        ;;  (compile-open-code-varargs exp target linkage compile-time-env))
+        ;; ((application-open-code? exp)
+        ;;  (compile-open-code exp target linkage compile-time-env))
+        ;; More nuanced open-coding as per Ex. 5.44
+        ((application-open-code-varargs? exp compile-time-env)
          (compile-open-code-varargs exp target linkage compile-time-env))
-        ((application-open-code? exp)
+        ((application-open-code? exp compile-time-env)
          (compile-open-code exp target linkage compile-time-env))
         ((application? exp)
          (compile-application exp target linkage compile-time-env))
