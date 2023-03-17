@@ -135,7 +135,7 @@
                         get-value-code
                         (make-instruction-sequence
                          '(env val) (list target)
-                          `((perform op (lexical-address-set!)
+                          `((perform (op lexical-address-set!)
                                      (const ,lexical-address)
                                      (reg val)
                                      (reg env))
