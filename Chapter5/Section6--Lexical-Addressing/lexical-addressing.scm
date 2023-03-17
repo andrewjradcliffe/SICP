@@ -305,7 +305,7 @@ compile-lambda to be:
   (get-register-contents compiled-machine 'val)
   )
 (define (interactive-compiled-test-f-eval-with-monitoring)
-  (display ";;; enter n")
+  (display ";;; enter (a b c d e)")
   (newline)
   (let ((abcde (read)))
     (let ((a (first abcde))
