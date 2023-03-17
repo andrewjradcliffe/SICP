@@ -287,3 +287,70 @@ open-coding. Either compiler can be loaded and the examples tested.
         (display (test-f-3 a b)))))
   (newline)
   (interactive-compiled-test-f-3-eval-with-monitoring))
+
+
+;; Test case #5
+(define test-f-4-asm
+  (begin (reset-label-counter)
+         (compile
+          '(begin
+             (define a 1)
+             (define b 2)
+             (define (test-f-4)
+               (define u 1)
+               (define v 2)
+               (+ u v a b)))
+          'val
+          'next
+          empty-compile-time-environment)))
+(print-compiled-instruction-sequence test-f-4-asm)
+
+
+(define (compiled-test-f-4-eval-with-monitoring a b)
+  (define the-global-environment (setup-environment))
+  (define (get-global-environment) the-global-environment)
+  (define compiled-machine
+    (make-machine
+     all-regs
+     (append (list (list 'get-global-environment get-global-environment))
+             compiled-code-operations)
+     `(
+       (perform (op initialize-stack))
+       ,@(statements
+          (begin (reset-label-counter)
+                 (compile
+                  `(begin
+                     (define a ,a)
+                     (define b ,b)
+                     (define (test-f-4)
+                       (define u 1)
+                       (define v 2)
+                       (+ u v a b))
+                     (test-f-4))
+                  'val
+                  'next
+                  empty-compile-time-environment)
+                 ))
+       (perform (op print-stack-statistics))
+       )
+     ))
+  (set-register-contents! compiled-machine 'env (get-global-environment))
+  (start compiled-machine)
+  (get-register-contents compiled-machine 'val)
+  )
+(define (interactive-compiled-test-f-4-eval-with-monitoring)
+  (display ";;; enter (a b)")
+  (newline)
+  (let ((ab (read)))
+    (let ((a (car ab))
+          (b (cadr ab)))
+      (let ((result (compiled-test-f-4-eval-with-monitoring a b)))
+        (newline)
+        (display "test-f-4 of ")
+        (display ab)
+        (display " = ")
+        (display result)
+        (display "    check value of test-f-4 = ")
+        (display (test-f-3 a b)))))
+  (newline)
+  (interactive-compiled-test-f-4-eval-with-monitoring))
