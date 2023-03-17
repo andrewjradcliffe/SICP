@@ -109,29 +109,37 @@
   (let ((var (assignment-variable exp))
         (get-value-code
          (compile (assignment-value exp) 'val 'next compile-time-env)))
-    (let ((lexical-address (find-variable exp compile-time-env)))
+    (let ((lexical-address (find-variable var compile-time-env)))
       (if (eq? 'not-found lexical-address)
           (end-with-linkage
            linkage
            (preserving '(env)
-                       get-value-code
-                       (make-instruction-sequence '(env val) (list target)
-                                                  `((assign ,target (op get-global-environment))
-                                                    (perform (op set-variable-value!)
-                                                             (const ,var)
-                                                             (reg val)
-                                                             (reg ,target))
-                                                    (assign ,target (const ok))))))
+                        get-value-code
+                        (make-instruction-sequence
+                         '(env val) (list target)
+                          ;; Here, however, the analogy to above is potentially fatal
+                          ;; as the value being set! is stored in val, and if
+                          ;; target is val, then we destroy the value.
+                          ;; Save/restore of env seems inevitable.
+                          `((save env)
+                            (assign env (op get-global-environment))
+                            (perform (op set-variable-value!)
+                                     (const ,var)
+                                     (reg val)
+                                     (reg env))
+                            (restore env)
+                            (assign ,target (const ok))))))
           (end-with-linkage
            linkage
            (preserving '(env)
-                       get-value-code
-                       (make-instruction-sequence '(env val) (list target)
-                                                  `((perform op (lexical-address-set!)
-                                                             (const ,lexical-address)
-                                                             (reg val)
-                                                             (reg ,target))
-                                                    (assign ,target (const ok))))))))))
+                        get-value-code
+                        (make-instruction-sequence
+                         '(env val) (list target)
+                          `((perform op (lexical-address-set!)
+                                     (const ,lexical-address)
+                                     (reg val)
+                                     (reg ,target))
+                            (assign ,target (const ok))))))))))
 
 
 ;; Ex. 5.43
@@ -144,11 +152,17 @@ of compile-lambda-body to be:
 
 Notably, the scan-out-defines of Ex. 4.16 only transforms to a let statement, which we do not
 quite support yet. Thus, it is worthwhile to implement the transformation directly to lambda.
+
+
+Upon second thought, it is perhaps preferable to perform the transformation within
+compile-lambda instead of compile-lambda-body. Thus, we change the penultimate line in
+compile-lambda to be:
+(compile-lambda-body (lambda-internal-transform exp) proc-entry compile-time-env)
 |#
 (define (unassigned-list n)
   (if (= n 0)
       '()
-      (cons '*unassigned* (unassigned-list (- n 1)))))
+      (cons ''*unassigned* (unassigned-list (- n 1)))))
 
 (define (internal-definitions-transform body-exps)
   (let ((defines (filter definition? body-exps)))
@@ -167,6 +181,9 @@ quite support yet. Thus, it is worthwhile to implement the transformation direct
                            (append set!-exps regulars))
               (unassigned-list (length defines)))))))))
 
+(define (lambda-internal-transform exp)
+  (make-lambda (lambda-parameters exp)
+               (internal-definitions-transform (lambda-body exp))))
 
 ;; Test case #1
 (define figure-5.17
