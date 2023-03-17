@@ -474,3 +474,126 @@ A_22 : cadddr
                                    '(1 2 3 4)))))
   (newline)
   (interactive-compiled-test-linear-comb-eval-with-monitoring))
+
+;; Test case #7
+(define (fib-rec n)
+  (if (< n 2)
+      n
+      (+ (fib-rec (- n 1)) (fib-rec (- n 2)))))
+(define fib-tester
+  (begin (reset-label-counter)
+         (compile
+          '(define (fib n)
+             (if (< n 2)
+                 n
+                 (+ (fib (- n 1)) (fib (- n 2)))))
+          'val
+          'next
+          empty-compile-time-environment)))
+(print-compiled-instruction-sequence fib-tester)
+(define (compiled-fib-eval-with-monitoring n)
+  (define the-global-environment (setup-environment))
+  (define (get-global-environment) the-global-environment)
+  (define compiled-machine
+    (make-machine
+     all-regs
+     (append (list (list 'get-global-environment get-global-environment))
+             compiled-code-operations)
+     `(
+       (perform (op initialize-stack))
+       ,@(statements
+          (begin (reset-label-counter)
+                 (compile
+                  `(begin
+                     (define (fib n)
+                       (if (< n 2)
+                           n
+                           (+ (fib (- n 1)) (fib (- n 2)))))
+                     (fib ,n))
+                  'val
+                  'next
+                  empty-compile-time-environment)
+                 ))
+       (perform (op print-stack-statistics))
+       )
+     ))
+  (set-register-contents! compiled-machine 'env (get-global-environment))
+  (start compiled-machine)
+  (get-register-contents compiled-machine 'val)
+  )
+(define (interactive-compiled-fib-eval-with-monitoring)
+  (display ";;; enter n")
+  (newline)
+  (let ((n (read)))
+    (let ((result (compiled-fib-eval-with-monitoring n)))
+      (newline)
+      (display "fib of ")
+      (display n)
+      (display " = ")
+      (display result)
+      (display "    check falue of fib = ")
+      (display (fib-rec n))))
+  (newline)
+  (interactive-compiled-fib-eval-with-monitoring))
+
+;; Test case #8
+(define fib-iter-tester
+  (begin (reset-label-counter)
+         (compile
+          '(define (fib n)
+             (define (iter a b n)
+               (if (= n 0)
+                   a
+                   (iter b (+ a b) (- n 1))))
+             (iter 0 1 n))
+          'val
+          'next
+          empty-compile-time-environment)))
+(print-compiled-instruction-sequence fib-iter-tester)
+(define (compiled-fib-iter-eval-with-monitoring n)
+  (define the-global-environment (setup-environment))
+  (define (get-global-environment) the-global-environment)
+  (define compiled-machine
+    (make-machine
+     all-regs
+     (append (list (list 'get-global-environment get-global-environment))
+             compiled-code-operations)
+     `(
+       (perform (op initialize-stack))
+       ,@(statements
+          (begin (reset-label-counter)
+                 (compile
+                  `(begin
+                     (define (fib n)
+                        (define (iter a b n)
+                          (if (= n 0)
+                              a
+                              (iter b (+ a b) (- n 1))))
+                        (iter 0 1 n))
+                     (fib ,n))
+                  'val
+                  'next
+                  empty-compile-time-environment)
+                 ))
+       (perform (op print-stack-statistics))
+       )
+     ))
+  (set-register-contents! compiled-machine 'env (get-global-environment))
+  (start compiled-machine)
+  (get-register-contents compiled-machine 'val)
+  )
+(define (interactive-compiled-fib-iter-eval-with-monitoring)
+  (display ";;; enter n")
+  (newline)
+  (let ((n (read)))
+    (let ((result (compiled-fib-iter-eval-with-monitoring n)))
+      (newline)
+      (display "fib-iter of ")
+      (display n)
+      (display " = ")
+      (display result)
+      (display "    check falue of fib-iter = ")
+      (display (fib-rec n))))
+  (newline)
+  (interactive-compiled-fib-iter-eval-with-monitoring))
+
