@@ -476,6 +476,17 @@ A_22 : cadddr
   (interactive-compiled-test-linear-comb-eval-with-monitoring))
 
 ;; Test case #7
+#|
+fib    n    maximum depth    total pushes
+0      0    2                2
+1      1    2                2
+1      2    4                9
+2      3    6                16
+3      4    8                30
+5      5    10               51
+8      6    12               86
+|#
+
 (define (fib-rec n)
   (if (< n 2)
       n

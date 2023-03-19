@@ -52,6 +52,45 @@ n total-pushes maximum-depth
 2(n-1) = 2n - 2
 |#
 
+;; Additional, for fib
+#|
+fib    n    maximum depth    total pushes
+0      0    0                0
+1      1    0                0
+1      2    2                3
+2      3    4                6
+3      4    6                12
+5      5    8                21
+8      6    10               36
+|#
+(define recursive-fibonacci-machine
+  (make-machine
+   recursive-fibonacci-registers
+   recursive-fibonacci-operations
+   `((perform (op initialize-stack))
+     ,@recursive-fibonacci-controller-text
+     (perform (op print-stack-statistics)))))
+
+(define (compute-recursive-fibonacci n)
+  (set-register-contents! recursive-fibonacci-machine 'n n)
+  (start recursive-fibonacci-machine)
+  (get-register-contents recursive-fibonacci-machine 'val))
+
+(define (recursive-fibonacci-interactive)
+  (let ((n (read)))
+    (newline)
+    (display "(fibonacci ")
+    (display n)
+    (display ")")
+    (let ((val (compute-recursive-fibonacci n)))
+      (newline)
+      (display "val = ")
+      (display val)
+      (newline)
+      (newline)))
+  (recursive-fibonacci-interactive))
+
+
 
 ;; Ex. 5.15
 #|

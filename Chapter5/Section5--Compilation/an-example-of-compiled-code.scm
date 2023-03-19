@@ -154,6 +154,49 @@ n                maximum depth                number of pushes
 (compiled-factorial-alt-eval-with-monitoring 5)
 (compiled-factorial-alt-eval-with-monitoring 6)
 
+#|
+fib    n    maximum depth    total pushes
+0      0    2                2
+1      1    2                2
+1      2    5                12
+2      3    8                22
+3      4    11               42
+5      5    14               72
+8      6    17               122
+|#
+(define (compiled-fib-eval-with-monitoring n)
+  (define compiled-machine
+    (make-machine
+     all-regs
+     compiled-code-operations
+     `(
+       (perform (op initialize-stack))
+       ,@(statements
+          (begin (reset-label-counter)
+                 (compile
+                  `(begin
+                     (define (fib n)
+                       (if (< n 2)
+                           n
+                           (+ (fib (- n 1)) (fib (- n 2)))))
+                     (fib ,n))
+                  'val
+                  'next)
+                 ))
+       (perform (op print-stack-statistics))
+       )
+     ))
+  (define the-global-environment (setup-environment))
+  (define (get-global-environment) the-global-environment)
+  (set-register-contents! compiled-machine 'env (get-global-environment))
+  (start compiled-machine)
+  (get-register-contents compiled-machine 'val)
+  )
+(define (interactive-compiled-fib-eval-with-monitoring)
+  (let ((n (read)))
+    (compiled-fib-eval-with-monitoring n))
+  (newline)
+  (interactive-compiled-fib-eval-with-monitoring))
 
 
 ;; Ex. 5.34
@@ -849,4 +892,3 @@ would amount to stack operations somewhere.
       (display result)))
   (newline)
   (interactive-compiled-fact-varargs-with-monitoring))
-
