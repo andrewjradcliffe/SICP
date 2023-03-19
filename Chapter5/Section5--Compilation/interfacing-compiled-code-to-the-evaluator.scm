@@ -87,8 +87,8 @@ maximum depth
 lim n->inf (2n - 2) / (5n + 3)   = 2/5
 
 
-Though we can express Fib(n) = ⌊ϕⁿ / √5 ⌉ , ϕ = (1 + √5) / 2,
-in the strict sense, ⌊ϕⁿ / √5 ⌉ does not have a derivative as the nearest-integer
+Though we can express Fib(n) = ⌊ ϕⁿ / √5 ⌉ , ϕ = (1 + √5) / 2,
+in the strict sense, ⌊ ϕⁿ / √5 ⌉ does not have a derivative as the nearest-integer
 function is discontinuous. Hence, while it is tempting to the the limit as n->inf
 for the ratio of pushes, it is not mathematically valid as the derivative does not
 exist for Fib(n) -- the sequence of ratios does not converge, but rather, oscillates;
