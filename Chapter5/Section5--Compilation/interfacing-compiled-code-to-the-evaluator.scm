@@ -105,3 +105,83 @@ Nonetheless, compilation (with our simple compilers) realizes significant gains;
 a more sophisticated compiler could likely generate the same code as the special-purpose
 machine by explicitly allocating registers.
 |#
+
+
+
+;; Ex. 5.47
+(define (compile-procedure-call target linkage)
+  (let ((primitive-branch (make-label 'primitive-branch))
+        (compiled-branch (make-label 'compiled-branch))
+        (interpreted-branch (make-label 'interpreted-branch))
+        (after-call (make-label 'after-call)))
+    (let ((compiled-linkage
+           (if (eq? linkage 'next) after-call linkage)))
+      (append-instruction-sequences
+       (make-instruction-sequence '(proc) '()
+                                  `((test (op primitive-procedure?) (reg proc))
+                                    (branch (label ,primitive-branch))))
+       (make-instruction-sequence '(proc) '()
+                                  `((test (op compound-procedure?) (reg proc))
+                                    (branch (label ,interpreted-branch))))
+       (parallel-instruction-sequences
+        (append-instruction-sequences
+         compiled-branch
+         (compile-proc-appl target compiled-linkage))
+        (parallel-instruction-sequences
+         (append-instruction-sequences
+          interpreted-branch
+          (compile-interpreted-proc-appl target compiled-linkage))
+         (append-instruction-sequences
+          primitive-branch
+          (end-with-linkage linkage
+                            (make-instruction-sequence '(proc argl) (list target)
+                                                       `((assign ,target
+                                                                 (op apply-primitive-procedure)
+                                                                 (reg proc)
+                                                                 (reg argl))))))))
+       after-call))))
+
+#|
+compound-apply sets up the registers for ev-sequence, then proceeds into ev-sequence;
+at the last step of ev-sequence, continue is restored. Thus, we need to save continue
+so that we return the appropriate place (as continue is assigned within ev-sequence).
+|#
+(define (compile-interpreted-proc-appl target linkage)
+  (cond ((and (eq? target 'val) (not (eq? linkage 'return)))
+         (make-instruction-sequence '(proc) all-regs
+                                    `((assign continue (label ,linkage))
+                                      (save continue)
+                                      (goto (reg compapp)))))
+        ((and (not (eq? target 'val)) (not (eq? linkage 'return)))
+         (let ((proc-return (make-label 'proc-return)))
+           (make-instruction-sequence '(proc) all-regs
+                                      `((assign continue (label ,proc-return))
+                                        (save continue)
+                                        (goto (reg compapp))
+                                        ,proc-return
+                                        (assign ,target (reg val))
+                                        (goto (label ,linkage))))))
+        ((and (eq? target 'val) (eq? linkage 'return))
+         (make-instruction-sequence '(proc) all-regs
+                                    '((save continue)
+                                      (goto (reg compapp)))))
+        ((and (not (eq? target 'val)) (eq? linkage 'return))
+         (error "return linkage, target not val -- COMPILE" target))))
+
+;; Ex. 5.48
+(define (compile-and-run expression)
+  (let ((instructions
+         (assemble (statements
+                    (compile (exp-to-compile expression) 'val 'return))
+                   eceval)))
+    (set-register-contents! eceval 'val instructions)
+    (set-register-contents! eceval 'flag true)
+    (start eceval)))
+(define (compile-and-run? exp) (tagged-list? exp 'compile-and-run))
+(define (exp-to-compile exp) (cadr exp))
+;; within eval-dispatch, prior to application?
+(test (op compile-and-run?) (reg exp))
+(branch (label ev-compile-and-run))
+;; at end of eceval-controller
+ev-compile-and-run
+(perform (op compile-and-run) (reg exp))
