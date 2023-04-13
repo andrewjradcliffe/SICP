@@ -48,3 +48,64 @@
           (else
            (iter (+ s a) a (- b 1)))))
   (iter 0 a b))
+
+;; Ex. 1.19
+(define (fib n)
+  (fib-iter 1 0 0 1 n))
+(define (fib-iter a b p q n)
+  (cond ((= n 0) b)
+        ((even? n)
+         (fib-iter
+          a
+          b
+          (+ (* q q) (* p p))
+          (+ (* q q) (* 2 p q))
+          (/ n 2)))
+        (else
+         (fib-iter
+          (+ (* b q) (* a q) (* a p))
+          (+ (* b p) (* a q))
+          p
+          q
+          (- n 1)))))
+
+#|
+In fact, we can use the matrix exponential form to express negative Fibonacci numbers.
+|#
+
+(define (fib-both n)
+  (define (fib-iter a b p q n)
+    (cond ((= n 0) b)
+          ((even? n)
+           (fib-iter
+            a
+            b
+            (+ (* q q) (* p p))
+            (+ (* q q) (* 2 p q))
+            (/ n 2)))
+          (else
+           (fib-iter
+            (+ (* b q) (* a q) (* a p))
+            (+ (* b p) (* a q))
+            p
+            q
+            (- n 1)))))
+  (define (fib-iter-neg a b p q n)
+    (cond ((= n 0) b)
+          ((even? n)
+           (fib-iter-neg
+            a
+            b
+            (+ (* p p) (* q q))
+            (- (* 2 p q) (* q q))
+            (/ n 2)))
+          (else
+           (fib-iter-neg
+            (+ (* a p) (* b q))
+            (+ (* b p) (* a q) (- (* b q)))
+            p
+            q
+            (+ n 1)))))
+  (if (>= n 0)
+      (fib-iter 1 0 0 1 n)
+      (fib-iter-neg 1 0 0 1 n)))
